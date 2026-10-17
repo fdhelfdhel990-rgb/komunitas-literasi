@@ -20,16 +20,5 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 });
 
-// ROUTE DUMMY BUAT NGETES FITUR AJA, HAPUS SAAT VIEW ASLI UDH DIBUAT 
-Route::get('/tes-invite', function (Illuminate\Http\Request $request) {
-    // Data dummy seolah dimasukin dari form
-    $request->merge([
-        'name' => 'Admin Baru Uji Coba',
-        'username' => 'adminbaru',
-        'email' => 'emailku@gmail.com',
-        'password' => 'inipasswordbaru123',
-        'privileges' => ['publikasi' => true, 'digital_library' => false]
-    ]);
-    
-    return app(UserController::class)->inviteAdmin($request);
-})->middleware('auth');
+// Route super admin
+Route::post('/admin/invite', [UserController::class, 'inviteAdmin'])->middleware('auth');
