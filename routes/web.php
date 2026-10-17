@@ -19,3 +19,17 @@ Route::middleware('auth')->group(function () {
         return view('dashboard');   // PLACEHOLDER: ganti saat FE sudah bikin viewnya
     })->name('dashboard');
 });
+
+// ROUTE DUMMY BUAT NGETES FITUR AJA, HAPUS SAAT VIEW ASLI UDH DIBUAT 
+Route::get('/tes-invite', function (Illuminate\Http\Request $request) {
+    // Data dummy seolah dimasukin dari form
+    $request->merge([
+        'name' => 'Admin Baru Uji Coba',
+        'username' => 'adminbaru',
+        'email' => 'emailku@gmail.com',
+        'password' => 'inipasswordbaru123',
+        'privileges' => ['publikasi' => true, 'digital_library' => false]
+    ]);
+    
+    return app(UserController::class)->inviteAdmin($request);
+})->middleware('auth');
