@@ -17,23 +17,23 @@
             <h3>Jelajahi</h3>
             <a href="{{ url('/') }}">Beranda Utama</a>
             <a href="{{ url('/about') }}">Tentang Kami</a>
-            <a href="#digital-library">Digital Library</a>
-            <a href="#publication">Publikasi &amp; Berita</a>
+            <a href="{{ route('library.index') }}">Digital Library</a>
+            <a href="{{ route('publications.index') }}">Publikasi &amp; Berita</a>
         </div>
 
         <div>
             <h3>Kontak Kami</h3>
             <p class="contact-item">
                 <i class="fa-solid fa-phone" aria-hidden="true"></i>
-                <span>081234546789</span>
+                <span>Nomor WhatsApp belum diisi</span>
             </p>
             <p class="contact-item">
                 <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-                <span>Kec. Tambun Selatan<br>Kabupaten Bekasi, Jawa Barat</span>
+                <span>Tambun Selatan, Kabupaten Bekasi, Jawa Barat</span>
             </p>
             <p class="contact-item">
                 <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-                <span>@literasi.Remaj@gmail.com</span>
+                <span>Email belum diisi</span>
             </p>
         </div>
     </div>

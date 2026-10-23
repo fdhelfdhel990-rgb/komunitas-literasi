@@ -2,6 +2,7 @@
 
 @section('content')
 <section class="hero hero-about">
+    <img class="hero-image" src="{{ asset('assets/images/about/hero.jpg') }}" alt="" fetchpriority="high">
     <div class="hero-overlay"></div>
     <div class="container hero-content about-hero-content">
         <h1>Profil &amp; Perjalanan Komunitas</h1>
@@ -39,16 +40,16 @@
         <h2>Gerakan yang tumbuh dari kepedulian</h2>
         <div class="card-grid two">
             <article class="journey-card">
-                <img src="{{ asset('assets/images/about/journey-1.jpg') }}" alt="">
+                <img src="{{ asset('assets/images/about/journey-1.jpg') }}" alt="" loading="lazy" decoding="async">
                 <div class="card-body">
                     <span class="card-label">Program</span>
                     <h3>Gerobak Angkasa: Perpustakaan Keliling Komunitas</h3>
                     <p>Gerobak Angkasa membawa ratusan buku bacaan anak langsung ke lingkungan tempat tinggal mereka di enam desa dan satu kelurahan.</p>
-                    <a class="btn btn-primary" href="#join-us">Bergabung mendampingi →</a>
+                    <a class="btn btn-primary" href="{{ route('join-us') }}">Bergabung mendampingi →</a>
                 </div>
             </article>
             <article class="journey-card">
-                <img src="{{ asset('assets/images/about/journey-2.jpg') }}" alt="">
+                <img src="{{ asset('assets/images/about/journey-2.jpg') }}" alt="" loading="lazy" decoding="async">
                 <div class="card-body">
                     <span class="card-label">Kegiatan</span>
                     <h3>Gerobak Angkasa: Perpustakaan Keliling Komunitas</h3>

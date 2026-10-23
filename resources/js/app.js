@@ -42,6 +42,125 @@ if (menuButton && nav) {
 
 const partnerCarousel = document.querySelector('[data-partner-carousel]');
 
+const motionTargets = document.querySelectorAll(
+    'main > section:not(.hero), main > section > .container > h2, main > section > .container > .section-subtitle, main > section > .container > .stats-grid, main > section > .container > .card-grid, main > section > .container > .partner-carousel, main > section > .container > .publication-detail-grid, main > section > .container > .join-choice-grid, main > section > .container > .event-card, main > section > .container > .event-detail-card, main > section > .container > .publication-article, main > section > .container > .book-detail-card, .publication-grid > .publication-card, .book-catalog-grid > .book-catalog-card, .library-section .card-grid > .book-card, .publication-section .card-grid > .publication-card'
+);
+
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+if (motionTargets.length > 0 && 'IntersectionObserver' in window && !prefersReducedMotion.matches) {
+    const motionObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    motionTargets.forEach((target) => {
+        target.classList.add('scroll-motion');
+
+        if (target.matches('.publication-card, .book-card, .book-catalog-card')) {
+            const siblings = Array.from(target.parentElement.children);
+            const index = siblings.indexOf(target);
+            target.style.setProperty('--motion-delay', `${Math.min(index, 5) * 90}ms`);
+        }
+
+        motionObserver.observe(target);
+    });
+}
+
+const statisticCounters = document.querySelectorAll('[data-count-to]');
+
+if (statisticCounters.length > 0) {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const showFinalCount = (counter) => {
+        counter.textContent = Number(counter.dataset.countTo).toLocaleString('id-ID');
+    };
+
+    const animateCount = (counter) => {
+        const target = Number(counter.dataset.countTo);
+
+        if (reducedMotion.matches || !Number.isFinite(target) || target < 0) {
+            showFinalCount(counter);
+            return;
+        }
+
+        const duration = 1400;
+        const startTime = performance.now();
+        const updateCount = (currentTime) => {
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const easedProgress = 1 - ((1 - progress) ** 3);
+
+            counter.textContent = Math.floor(target * easedProgress).toLocaleString('id-ID');
+
+            if (progress < 1) {
+                requestAnimationFrame(updateCount);
+            } else {
+                showFinalCount(counter);
+            }
+        };
+
+        requestAnimationFrame(updateCount);
+    };
+
+    const counterObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                animateCount(entry.target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    statisticCounters.forEach((counter) => counterObserver.observe(counter));
+}
+
+document.querySelectorAll('[data-copy-link]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        const feedback = button.closest('.publication-share')?.querySelector('.copy-feedback');
+
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            if (feedback) {
+                feedback.textContent = 'Tautan berhasil disalin.';
+            }
+        } catch {
+            if (feedback) {
+                feedback.textContent = 'Salin tautan dari bilah alamat browser.';
+            }
+        }
+    });
+});
+
+document.querySelectorAll('[data-event-share]').forEach((button) => {
+    button.addEventListener('click', async () => {
+        const feedback = button.closest('.event-copy')?.querySelector('[data-event-feedback]');
+        const shareData = {
+            title: 'Membaca Bersama Gerobak Angkasa',
+            text: 'Lihat informasi volunteer event Komunitas Literasi Remaja Tambun Selatan.',
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                if (feedback) {
+                    feedback.textContent = 'Tautan event berhasil disalin.';
+                }
+            }
+        } catch {
+            if (feedback) {
+                feedback.textContent = 'Tautan event belum dapat dibagikan dari perangkat ini.';
+            }
+        }
+    });
+});
+
 if (partnerCarousel) {
     const viewport = partnerCarousel.querySelector('[data-partner-viewport]');
     const track = partnerCarousel.querySelector('[data-partner-track]');
@@ -92,11 +211,10 @@ if (partnerCarousel) {
                 const animation = track.getAnimations()[0];
 
                 if (animation) {
-                    if ((direction === 'next' && animation.playbackRate < 0)
-                        || (direction === 'previous' && animation.playbackRate > 0)) {
-                        animation.reverse();
-                    }
-
+                    animation.pause();
+                    animation.currentTime = direction === 'next' ? 0 : animation.effect.getTiming().duration;
+                    animation.playbackRate = 1;
+                    animation.play();
                     return;
                 }
 
