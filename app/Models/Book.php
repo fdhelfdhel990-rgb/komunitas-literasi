@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
+    protected $guarded = ['id'];
+
+    public function author()
+    {
+        return $this->belongsTo(Author::class, 'author_id');
+    }
+
+    public function publisher()
+    {
+        return $this->belongsTo(Publisher::class, 'publisher_id');
+    }
+
+    public function genre()
+    {
+        return $this->belongsTo(Genre::class, 'genre_id');
+    }
+    
     protected $fillable = [
         'title',
         'slug',

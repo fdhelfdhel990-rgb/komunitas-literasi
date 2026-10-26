@@ -11,11 +11,55 @@ use App\Models\Genre;
 
 class BookController extends Controller
 {
-    public function indexPublic()
+    public function indexPublic(Request $request)
     {
-        $buku_publik = Book::where('is_published', true)->get();
-        
-        return view('library.index', compact('buku_publik'));
+        if ($request->has('book')) {
+            $selectedBook = Book::with(['author', 'publisher', 'genre'])
+                                ->where('title', $request->query('book'))
+                                ->first();
+
+            return view('library.index', compact('selectedBook'));
+        }
+
+        $query = Book::with(['author', 'publisher', 'genre'])->where('is_published', true);
+
+        if ($request->has('q') && $request->query('q') !== '') {
+            $keyword = $request->query('q');
+            $query->where('title', 'LIKE', "%{$keyword}%") 
+                  ->orWhereHas('author', function($q) use ($keyword) {
+                      $q->where('name', 'LIKE', "%{$keyword}%");
+                  });
+        }
+
+        if ($request->has('genre') && $request->query('genre') !== '') {
+            $query->whereHas('genre', function($q) use ($request) {
+                $q->where('name', $request->query('genre'));
+            });
+        }
+
+        if ($request->has('publisher') && $request->query('publisher') !== '') {
+            $query->whereHas('publisher', function($q) use ($request) {
+                $q->where('name', $request->query('publisher'));
+            });
+        }
+
+        if ($request->query('sort') === 'za') {
+            $query->orderBy('title', 'desc');
+        } else {
+            $query->orderBy('title', 'asc');
+        }
+
+        $genres = \App\Models\Genre::pluck('name'); 
+        $publishers = \App\Models\Publisher::pluck('name');
+
+        $paginatedBooks = $query->paginate(6)->withQueryString(); 
+
+        return view('library.index', [
+            'paginatedBooks' => $paginatedBooks,
+            'genres' => $genres,
+            'publishers' => $publishers,
+            'selectedBook' => null
+        ]);
     }
 
     /**
@@ -23,7 +67,9 @@ class BookController extends Controller
      */
     public function index()
     {
-        //
+        $books = Book::with(['author', 'publisher', 'genre'])->latest()->get();
+        
+        return view('admin.digital-library.index', compact('books'));
     }
 
     /**
@@ -31,7 +77,7 @@ class BookController extends Controller
      */
     public function create()
     {
-        return view('add_book'); // PLACEHOLDER: ganti saat FE sudah bikin view
+        return view('add-book'); // PLACEHOLDER: ganti saat FE sudah bikin view
     }
 
     /**
