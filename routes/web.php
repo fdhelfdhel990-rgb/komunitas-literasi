@@ -3,14 +3,18 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\PublicationController;
 
 // Route public page
 Route::view('/', 'home')->name('home');
 Route::view('/about', 'about')->name('about');
-Route::view('/publication', 'publications.index')->name('publications.index');
-Route::view('/publication/semangat-20-relawan', 'publications.show')->name('publications.show');
+
+Route::get('/publication', [PublicationController::class, 'index'])->name('publications.index');
+Route::get('/publication/{slug}', [PublicationController::class, 'show'])->name('publications.show');
+
 Route::resource('buku', BookController::class);
 Route::get('/digital-library', [BookController::class, 'indexPublic'])->name('library.index');
+
 Route::view('/join-us', 'join-us')->name('join-us');
 Route::view('/join-us/volunteer-event', 'join-us.events')->name('join-us.events');
 Route::view('/join-us/volunteer-event/gerobak-angkasa', 'join-us.event-detail')->name('join-us.event-detail');

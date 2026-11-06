@@ -59,7 +59,7 @@
                 ['img'=>'publication-2.jpg','date'=>'Sabtu, 15 Agustus 2026','title'=>'Penyaluran Gerobak Angkasa: Menjangkau Pelosok Tambun Selatan dengan Buku','text'=>'Tambun Selatan – Dalam rangka memperluas akses membaca bagi anak-anak, Komunitas Literasi Remaja Tambun Selatan secara resmi mengoperasikan Gerobak Angkasa sebagai perpustakaan keliling....'],
                 ['img'=>'publication-3.jpg','date'=>'Selasa, 25 Agustus 2026','title'=>'Liputan Media Nasional: Gerakan Nyata Literasi Berdampak......','text'=>'Kabar Literasi – Gerakan membaca yang diinisiasi oleh Komunitas Literasi Remaja Tambun Selatan mendapat apresiasi dari pemerintah pendidikan nasional......'],
             ] as $item)
-                <a class="content-card publication-card" href="{{ route('publications.show') }}" aria-label="Baca berita: {{ $item['title'] }}">
+                <a class="content-card publication-card" href="{{ route('publications.show', str($item['title'])->slug()) }}" aria-label="Baca berita: {{ $item['title'] }}">
                     <img src="{{ asset('assets/images/publications/'.$item['img']) }}" alt="" loading="lazy" decoding="async">
                     <div class="card-body">
                         <span class="card-date">{{ $item['date'] }}</span>
@@ -69,7 +69,7 @@
                 </a>
             @endforeach
         </div>
-        <div class="center-button"><a class="btn btn-primary" href="#">Publikasi →</a></div>
+        <div class="center-button"><a class="btn btn-primary" href="{{ route('publications.index') }}">Publikasi →</a></div>
     </div>
 </section>
 

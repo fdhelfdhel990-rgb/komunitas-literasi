@@ -13,6 +13,17 @@ return new class extends Migration
     {
         Schema::create('publications', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->string('category');
+            $table->date('published_at')->nullable();
+            $table->text('excerpt')->nullable();
+            $table->longText('content');
+            $table->string('featured_image_path')->nullable();
+            $table->string('status')->default('published');
+            
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            
             $table->timestamps();
         });
     }
