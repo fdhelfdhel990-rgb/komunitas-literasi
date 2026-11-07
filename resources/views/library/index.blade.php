@@ -14,6 +14,12 @@
                 ['image' => 'book-1.jpg', 'title' => 'Negeri 5 Menara: Edisi Komunitas', 'author' => 'Ahmad Fuadi', 'genre' => 'Novel', 'publisher' => 'Gramedia', 'description' => 'Kisah tentang belajar, hidup bersama, dan keyakinan yang menguatkan perjalanan meraih masa depan.'],
                 ['image' => 'book-2.png', 'title' => 'Educated: Perjalanan Belajar', 'author' => 'Tara Westover', 'genre' => 'Memoar', 'publisher' => 'Gramedia', 'description' => 'Cerita perjalanan belajar yang membuka perspektif dan memberi ruang untuk bertumbuh.'],
                 ['image' => 'book-3.png', 'title' => 'Quarter-Life Crisis: Mengenal Diri', 'author' => 'Maudy Ayunda', 'genre' => 'Pengembangan Diri', 'publisher' => 'Mizan', 'description' => 'Bacaan tentang mengenali nilai diri dan membuat keputusan dengan lebih terarah.'],
+                ['image' => 'book-1.jpg', 'title' => 'Negeri 5 Menara: Semangat Belajar', 'author' => 'Ahmad Fuadi', 'genre' => 'Novel', 'publisher' => 'Gramedia', 'description' => 'Data contoh untuk pratinjau katalog. Kisah tentang persahabatan dan semangat belajar dalam perjalanan meraih cita-cita.'],
+                ['image' => 'book-2.png', 'title' => 'Educated: Catatan Perjalanan', 'author' => 'Tara Westover', 'genre' => 'Memoar', 'publisher' => 'Gramedia', 'description' => 'Data contoh untuk pratinjau katalog. Memoar tentang pengalaman belajar dan perubahan perspektif hidup.'],
+                ['image' => 'book-3.png', 'title' => 'Quarter-Life Crisis: Langkah Bertumbuh', 'author' => 'Maudy Ayunda', 'genre' => 'Pengembangan Diri', 'publisher' => 'Mizan', 'description' => 'Data contoh untuk pratinjau katalog. Bacaan reflektif untuk memahami perubahan dan menentukan langkah ke depan.'],
+                ['image' => 'book-1.jpg', 'title' => 'Negeri 5 Menara: Kisah Persahabatan', 'author' => 'Ahmad Fuadi', 'genre' => 'Novel', 'publisher' => 'Gramedia', 'description' => 'Data contoh untuk pratinjau katalog. Cerita tentang kebersamaan, pendidikan, dan keyakinan dalam mencapai impian.'],
+                ['image' => 'book-2.png', 'title' => 'Educated: Menemukan Jati Diri', 'author' => 'Tara Westover', 'genre' => 'Memoar', 'publisher' => 'Gramedia', 'description' => 'Data contoh untuk pratinjau katalog. Perjalanan menemukan pengetahuan dan membentuk pemahaman diri.'],
+                ['image' => 'book-3.png', 'title' => 'Quarter-Life Crisis: Menata Tujuan', 'author' => 'Maudy Ayunda', 'genre' => 'Pengembangan Diri', 'publisher' => 'Mizan', 'description' => 'Data contoh untuk pratinjau katalog. Panduan refleksi untuk menyusun tujuan pada masa dewasa muda.'],
             ];
             $search = mb_strtolower((string) request('q'));
             $genre = (string) request('genre', '');
@@ -25,7 +31,7 @@
             } elseif ($sortOrder === 'za') {
                 usort($filteredBooks, fn ($firstBook, $secondBook) => strcasecmp($secondBook['title'], $firstBook['title']));
             }
-            $booksPerPage = 6;
+            $booksPerPage = 12;
             $totalPages = max(1, (int) ceil(count($filteredBooks) / $booksPerPage));
             $currentPage = min(max((int) request('page', 1), 1), $totalPages);
             $paginatedBooks = array_slice($filteredBooks, ($currentPage - 1) * $booksPerPage, $booksPerPage);

@@ -29,6 +29,10 @@
             $query = mb_strtolower((string) request('q'));
             $category = (string) request('category', '');
             $articles = array_values(array_filter($articles, fn ($article) => ($query === '' || str_contains(mb_strtolower($article['title'].' '.$article['summary'].' '.$article['category']), $query)) && ($category === '' || $article['category'] === $category)));
+            $articlesPerPage = 6;
+            $totalPages = max(1, (int) ceil(count($articles) / $articlesPerPage));
+            $currentPage = min(max((int) request('page', 1), 1), $totalPages);
+            $paginatedArticles = array_slice($articles, ($currentPage - 1) * $articlesPerPage, $articlesPerPage);
         @endphp
 
         <form class="publication-filter-bar" action="{{ route('publications.index') }}" method="GET">
@@ -47,7 +51,7 @@
 
         @if (count($articles))
             <div class="publication-grid">
-                @foreach ($articles as $article)
+                @foreach ($paginatedArticles as $article)
                     <a class="publication-card" href="{{ route('publications.show') }}">
                         <img src="{{ asset('assets/images/publications/'.$article['image']) }}" alt="Kegiatan Komunitas Literasi Remaja Tambun Selatan" loading="lazy" decoding="async">
                         <div class="publication-card-body">
@@ -63,13 +67,27 @@
             <p class="publication-empty">Berita dengan kata kunci tersebut belum ditemukan.</p>
         @endif
 
-        <nav class="publication-pagination" aria-label="Navigasi halaman publikasi">
-            <a class="current" href="{{ route('publications.index', request()->query()) }}" aria-current="page">1</a>
-            <a href="{{ route('publications.index', array_merge(request()->query(), ['page' => 2])) }}">2</a>
-            <span aria-hidden="true">…</span>
-            <a href="{{ route('publications.index', array_merge(request()->query(), ['page' => 30])) }}">30</a>
-            <a class="pagination-next" href="{{ route('publications.index', array_merge(request()->query(), ['page' => 2])) }}" aria-label="Halaman berikutnya">›</a>
-        </nav>
+        @if (count($articles) && $totalPages > 1)
+            <nav class="book-pagination" aria-label="Navigasi halaman publikasi">
+                @if ($currentPage > 1)
+                    <a href="{{ route('publications.index', array_merge(request()->except('page'), ['page' => $currentPage - 1])) }}" aria-label="Halaman sebelumnya">&lt;</a>
+                @else
+                    <span class="disabled" aria-disabled="true" aria-label="Halaman sebelumnya">&lt;</span>
+                @endif
+                @for ($page = 1; $page <= $totalPages; $page++)
+                    @if ($page === $currentPage)
+                        <span class="current" aria-current="page">{{ $page }}</span>
+                    @else
+                        <a href="{{ route('publications.index', array_merge(request()->except('page'), ['page' => $page])) }}" aria-label="Halaman {{ $page }}">{{ $page }}</a>
+                    @endif
+                @endfor
+                @if ($currentPage < $totalPages)
+                    <a href="{{ route('publications.index', array_merge(request()->except('page'), ['page' => $currentPage + 1])) }}" aria-label="Halaman berikutnya">&gt;</a>
+                @else
+                    <span class="disabled" aria-disabled="true" aria-label="Halaman berikutnya">&gt;</span>
+                @endif
+            </nav>
+        @endif
     </div>
 </section>
 @endsection
