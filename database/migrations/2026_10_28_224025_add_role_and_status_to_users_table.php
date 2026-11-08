@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('role')->default('admin')->after('username');
-            $table->string('status')->default('pending')->after('role');
+            if (! Schema::hasColumn('users', 'role')) {
+                $table->string('role')->default('admin')->after('username');
+            }
+            if (! Schema::hasColumn('users', 'status')) {
+                $table->string('status')->default('pending')->after('role');
+            }
         });
     }
 

@@ -28,7 +28,7 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs sm:shadow-sm hover:shadow-md transition">
             <span class="text-xs font-mono font-semibold text-slate-400 block mb-3">BK</span>
             <div class="text-xs text-slate-500 font-medium mb-1">Koleksi Buku</div>
-            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">15</div>
+            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{{ \App\Models\Book::count() }}</div>
             <a href="{{ route('admin.library.index') }}" class="text-xs font-semibold text-[#0A2373] hover:underline flex items-center gap-1.5">
                 <span>Kelola katalog</span>
                 <i class="fa-solid fa-arrow-right text-[10px]"></i>

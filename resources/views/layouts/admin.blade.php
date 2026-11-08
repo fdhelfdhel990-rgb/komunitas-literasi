@@ -151,8 +151,8 @@
                         {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
                     </div>
                     <div class="text-left leading-tight hidden sm:block">
-                        <div class="text-sm font-semibold text-slate-900 max-w-[120px] md:max-w-[180px] truncate">{{ Auth::user()->name ?? 'Admin Literasi' }}</div>
-                        <div class="text-xs text-slate-400 capitalize">{{ Auth::user()->role === 'super_admin' ? 'Super admin' : 'Admin' }}</div>
+                        <div class="text-sm font-semibold text-slate-900 max-w-[120px] md:max-w-[180px] truncate">{{ Auth::user()?->name ?? 'Admin Literasi' }}</div>
+                        <div class="text-xs text-slate-400 capitalize">{{ (Auth::user()?->role === 'super_admin') ? 'Super admin' : 'Admin' }}</div>
                     </div>
                 </div>
 

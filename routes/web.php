@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 // Route public page
 Route::view('/', 'home')->name('home');
@@ -16,7 +16,6 @@ Route::view('/join-us', 'join-us')->name('join-us');
 Route::view('/join-us/volunteer-event', 'join-us.events')->name('join-us.events');
 Route::view('/join-us/volunteer-event/gerobak-angkasa', 'join-us.event-detail')->name('join-us.event-detail');
 
-<<<<<<< HEAD
 // Guest Authentication Routes (Login)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -35,9 +34,10 @@ Route::middleware(['auth'])->group(function () {
         return view('admin.publications.index');
     })->name('admin.publications.index');
 
-    Route::get('/admin/library', function () {
-        return view('admin.library.index');
-    })->name('admin.library.index');
+    Route::get('/admin/library', [BookController::class, 'indexAdmin'])->name('admin.library.index');
+    Route::post('/admin/library', [BookController::class, 'store'])->name('admin.library.store');
+    Route::put('/admin/library/{id}', [BookController::class, 'update'])->name('admin.library.update');
+    Route::delete('/admin/library/{id}', [BookController::class, 'destroy'])->name('admin.library.destroy');
 
     Route::get('/admin/join-us', function () {
         return view('admin.join-us.index');
@@ -55,22 +55,10 @@ Route::middleware(['auth'])->group(function () {
         return view('admin.users.index');
     })->name('admin.users.index');
 
+    // Route super admin
+    Route::post('/admin/invite', [UserController::class, 'inviteAdmin']);
+
     Route::redirect('/admin', '/admin/dashboard');
+    Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
     Route::redirect('/workspace/dashboard', '/admin/dashboard');
 });
-=======
-
-// Route admin
-Route::get('/login', [UserController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [UserController::class, 'login']);
-Route::post('/logout', [UserController::class, 'logout'])->name('logout');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');   // PLACEHOLDER: ganti saat FE sudah bikin viewnya
-    })->name('dashboard');
-});
-
-// Route super admin
-Route::post('/admin/invite', [UserController::class, 'inviteAdmin'])->middleware('auth');
->>>>>>> a1291c04b64592207e8c35adbda021c98d551c0a
