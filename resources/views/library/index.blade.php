@@ -1,4 +1,4 @@
-﻿@extends('layouts.app', ['title' => 'Digital Library'])
+@extends('layouts.app', ['title' => 'Digital Library'])
 
 @section('content')
 <section class="library-page-section">

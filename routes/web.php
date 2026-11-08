@@ -3,10 +3,27 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\UserController;
+use App\Models\Book;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 // Route public page
-Route::view('/', 'home')->name('home');
+Route::get('/', function () {
+    $recentBooks = collect();
+    try {
+        if (Schema::hasTable('books')) {
+            $recentBooks = Book::with(['author', 'genre', 'publisher'])
+                ->where('is_published', true)
+                ->latest()
+                ->take(4)
+                ->get();
+        }
+    } catch (Throwable) {
+        $recentBooks = collect();
+    }
+
+    return view('home', compact('recentBooks'));
+})->name('home');
 Route::view('/about', 'about')->name('about');
 Route::view('/publication', 'publications.index')->name('publications.index');
 Route::view('/publication/semangat-20-relawan', 'publications.show')->name('publications.show');
