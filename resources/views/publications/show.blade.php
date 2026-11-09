@@ -1,4 +1,4 @@
-﻿@extends('layouts.app', ['title' => 'Semangat 20 Relawan Membina Perpustakaan Desa'])
+﻿@extends('layouts.app', ['title' => $publication->title])
 
 @section('content')
 <section class="publication-detail-section">
@@ -10,7 +10,7 @@
         </nav>
         <div class="publication-detail-layout">
             <article class="publication-article">
-                <img class="publication-feature-image" src="{{ asset('assets/images/publications/publication-1.jpg') }}" alt="Relawan dan anak-anak dalam kegiatan perpustakaan keliling" fetchpriority="high">
+                <img class="publication-feature-image" src="{{ $publication->featured_image_path ? asset('assets/images/publications/'.$publication->featured_image_path) : 'https://placehold.co/800x400?text=No+Image' }}" alt="{{ $publication->title }}" fetchpriority="high">
                 <div class="publication-share">
                     <span>Bagikan:</span>
                     <div>
@@ -21,12 +21,10 @@
                     </div>
                     <span class="copy-feedback" aria-live="polite"></span>
                 </div>
-                <h1>Semangat 20 Relawan Membina 2 Perpustakaan Desa di Wilayah Tambun Selatan</h1>
-                <p class="publication-article-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Kamis, 20 Agustus 2026</p>
+                <h1>{{ $publication->title }}</h1>
+                <p class="publication-article-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ \Carbon\Carbon::parse($publication->published_at)->translatedFormat('l, d F Y') }}</p>
                 <div class="publication-article-copy">
-                    <p>Gerobak Angkasa merupakan perpustakaan keliling yang menjadi ujung tombak pergerakan Komunitas Literasi Remaja Tambun Selatan. Gerobak ini membawa ratusan buku bacaan anak langsung ke lingkungan tempat tinggal anak-anak di 6 desa dan 1 kelurahan.</p>
-                    <p>Dipandu oleh 20 sukarelawan aktif, kegiatan Gerobak Angkasa tidak hanya menyajikan buku, namun juga menghidupkan ruang membaca bersama, pendampingan belajar, dan cerita gembira bagi lebih dari 400 anak-anak yang telah merasakan dampak positifnya.</p>
-                    <p>Melalui dua perpustakaan desa binaan, para relawan terus menjaga semangat belajar dan memastikan setiap anak dapat menemukan bacaan yang menyenangkan dan bermakna.</p>
+                    {!! $publication->content !!}
                 </div>
             </article>
             <aside class="publication-sidebar">
@@ -39,15 +37,10 @@
                 </section>
                 <section class="sidebar-box recent-posts">
                     <h2>Berita Terbaru</h2>
-                    @foreach ([
-                        ['publication-1.jpg', 'Semangat 20 Relawan Membina 2 Perpustakaan Desa', 'Kamis, 20 Agustus 2026'],
-                        ['publication-2.jpg', 'Semangat Membaca Anak-anak bersama Gerobak Angkasa', 'Sabtu, 15 Agustus 2026'],
-                        ['publication-1.jpg', 'Kegiatan Literasi Bersama Relawan Tambun Selatan', 'Senin, 10 Agustus 2026'],
-                        ['publication-3.jpg', 'Gerobak Angkasa Hadirkan Perpustakaan Keliling', 'Selasa, 4 Agustus 2026'],
-                    ] as [$image, $title, $date])
-                        <a class="recent-post" href="{{ route('publications.show') }}">
-                            <img src="{{ asset('assets/images/publications/'.$image) }}" alt="" loading="lazy" decoding="async">
-                            <span><strong>{{ $title }}</strong><small>{{ $date }}</small></span>
+                    @foreach ($recentPosts as $recent)
+                        <a class="recent-post" href="{{ route('publications.show', $recent->slug) }}">
+                            <img src="{{ $recent->featured_image_path ? asset('assets/images/publications/'.$recent->featured_image_path) : 'https://placehold.co/150x150?text=No+Image' }}" alt="{{ $recent->title }}" loading="lazy" decoding="async">
+                            <span><strong>{{ $recent->title }}</strong><small>{{ \Carbon\Carbon::parse($recent->published_at)->translatedFormat('l, d F Y') }}</small></span>
                         </a>
                     @endforeach
                 </section>
