@@ -1,4 +1,4 @@
-﻿@extends('layouts.app', ['title' => 'Publikasi & Kabar Komunitas'])
+@extends('layouts.app', ['title' => 'Publikasi & Kabar Komunitas'])
 
 @section('content')
 <section class="publication-list-section">
