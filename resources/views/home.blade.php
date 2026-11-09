@@ -54,20 +54,18 @@
         <h2>Publikasi &amp; Kabar Kegiatan</h2>
         <p class="section-subtitle">Dokumentasi perjalanan, artikel edukatif, dan liputan berita komunitas.</p>
         <div class="card-grid three">
-            @foreach ([
-                ['img'=>'publication-1.jpg','date'=>'Kamis, 20 Agustus 2026','title'=>'Semangat 20 Relawan Membina 2 Perpustakaan Desa di Wilayah Tambun Selatan','text'=>'Tambun Selatan – Memiliki visi bersama dalam memajukan literasi, 20 relawan Komunitas Literasi Remaja Tambun Selatan secara aktif mendampingi....'],
-                ['img'=>'publication-2.jpg','date'=>'Sabtu, 15 Agustus 2026','title'=>'Penyaluran Gerobak Angkasa: Menjangkau Pelosok Tambun Selatan dengan Buku','text'=>'Tambun Selatan – Dalam rangka memperluas akses membaca bagi anak-anak, Komunitas Literasi Remaja Tambun Selatan secara resmi mengoperasikan Gerobak Angkasa sebagai perpustakaan keliling....'],
-                ['img'=>'publication-3.jpg','date'=>'Selasa, 25 Agustus 2026','title'=>'Liputan Media Nasional: Gerakan Nyata Literasi Berdampak......','text'=>'Kabar Literasi – Gerakan membaca yang diinisiasi oleh Komunitas Literasi Remaja Tambun Selatan mendapat apresiasi dari pemerintah pendidikan nasional......'],
-            ] as $item)
-                <a class="content-card publication-card" href="{{ route('publications.show', str($item['title'])->slug()) }}" aria-label="Baca berita: {{ $item['title'] }}">
-                    <img src="{{ asset('assets/images/publications/'.$item['img']) }}" alt="" loading="lazy" decoding="async">
+            @forelse ($latestPublications as $pub)
+                <a class="content-card publication-card" href="{{ route('publications.show', $pub->slug) }}" aria-label="Baca berita: {{ $pub->title }}">
+                    <img src="{{ \Illuminate\Support\Str::startsWith($pub->featured_image_path, ['http://', 'https://']) ? $pub->featured_image_path : ($pub->featured_image_path ? asset('assets/images/publications/'.$pub->featured_image_path) : 'https://placehold.co/600x400?text=No+Image') }}" alt="{{ $pub->title }}" loading="lazy" decoding="async">
                     <div class="card-body">
-                        <span class="card-date">{{ $item['date'] }}</span>
-                        <h3>{{ $item['title'] }}</h3>
-                        <p>{{ $item['text'] }}</p>
+                        <span class="card-date">{{ \Carbon\Carbon::parse($pub->published_at)->translatedFormat('l, d F Y') }}</span>
+                        <h3>{{ $pub->title }}</h3>
+                        <p>{{ $pub->excerpt }}</p>
                     </div>
                 </a>
-            @endforeach
+            @empty
+                <p>Belum ada publikasi terbaru.</p>
+            @endforelse
         </div>
         <div class="center-button"><a class="btn btn-primary" href="{{ route('publications.index') }}">Publikasi →</a></div>
     </div>
@@ -78,22 +76,19 @@
         <h2>Koleksi Buku Terkini</h2>
         <p class="section-subtitle">Pilihan buku terbaru yang baru ditambahkan oleh komunitas.</p>
         <div class="card-grid four">
-            @foreach ([
-                ['img'=>'book-3.png','title'=>'Quarter-Life Crisis','author'=>'Maudy Ayunda','type'=>'Pengembangan Diri'],
-                ['img'=>'book-1.jpg','title'=>'Negeri 5 Menara','author'=>'Ahmad Fuadi','type'=>'Novel'],
-                ['img'=>'book-2.png','title'=>'Educated','author'=>'Tara Westover','type'=>'Memoar'],
-                ['img'=>'book-3.png','title'=>'Quarter-Life Crisis','author'=>'Maudy Ayunda','type'=>'Pengembangan Diri'],
-            ] as $book)
+            @forelse ($latestBooks as $book)
                 <article class="book-card">
-                    <img src="{{ asset('assets/images/books/'.$book['img']) }}" alt="" loading="lazy" decoding="async">
+                    <img src="{{ \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://']) ? $book->cover_path : ($book->cover_path ? asset('assets/images/books/'.$book->cover_path) : 'https://placehold.co/400x600?text=No+Cover') }}" alt="Sampul buku {{ $book->title }}" loading="lazy" decoding="async">
                     <div class="book-body">
-                        <span>{{ $book['title'] }}</span>
-                        <strong>{{ $book['author'] }}</strong>
-                        <small>{{ $book['type'] }}</small>
-                        <a href="{{ route('library.index', ['book' => $book['title']]) }}">Lihat Detail</a>
+                        <span>{{ $book->title }}</span>
+                        <strong>{{ $book->author->name }}</strong>
+                        <small>{{ $book->genre->name }}</small>
+                        <a href="{{ route('library.index', ['book' => $book->title]) }}">Lihat Detail</a>
                     </div>
                 </article>
-            @endforeach
+            @empty
+                <p>Belum ada koleksi buku terbaru.</p>
+            @endforelse
         </div>
         <div class="center-button"><a class="btn btn-primary" href="{{ route('library.index') }}">Digital Library →</a></div>
     </div>

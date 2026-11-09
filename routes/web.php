@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\PublicationController;
+use App\Http\Controllers\HomeController;
 
 // Route public page
-Route::view('/', 'home')->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::view('/about', 'about')->name('about');
 
 Route::get('/publication', [PublicationController::class, 'index'])->name('publications.index');
