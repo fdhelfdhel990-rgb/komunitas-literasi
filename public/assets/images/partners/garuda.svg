@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80">
+  <g fill="#024B68">
+    <!-- Stylized Wings / Bird Emblem -->
+    <path d="M15 48 C35 32 60 25 90 28 C75 32 55 38 40 46 Z"/>
+    <path d="M25 40 C45 24 75 18 105 22 C90 26 70 31 55 38 Z"/>
+    <path d="M40 32 C60 18 90 12 120 16 C105 20 85 24 70 30 Z"/>
+    <path d="M60 24 C80 12 110 8 135 12 C120 15 100 19 85 24 Z"/>
+    <path d="M125 18 C135 14 145 16 142 22 C138 25 130 24 125 22 Z"/>
+    <!-- Head / beak -->
+    <circle cx="138" cy="20" r="3"/>
+  </g>
+  <!-- Garuda Indonesia text -->
+  <text x="140" y="52" font-family="'Poppins', sans-serif" font-weight="700" font-size="22" fill="#024B68" text-anchor="middle">Garuda Indonesia</text>
+  <text x="140" y="68" font-family="'Poppins', sans-serif" font-weight="500" font-size="10" fill="#718096" text-anchor="middle" letter-spacing="1">The Airline of Indonesia</text>
+</svg>

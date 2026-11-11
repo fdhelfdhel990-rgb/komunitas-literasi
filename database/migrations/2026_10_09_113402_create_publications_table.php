@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('publications', function (Blueprint $table) {
@@ -21,9 +18,9 @@ return new class extends Migration
             $table->longText('content');
             $table->string('featured_image_path')->nullable();
             $table->string('status')->default('published');
-            
+
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
-            
+
             $table->timestamps();
         });
     }

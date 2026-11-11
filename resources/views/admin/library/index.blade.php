@@ -34,26 +34,18 @@
     <!-- Page Header & Action -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-            <div class="flex items-center gap-2 mb-1">
-                <span class="w-6 h-6 rounded-md bg-[#E8EEF8] text-[#0A2373] text-xs font-mono font-bold flex items-center justify-center">03</span>
-                <span class="text-xs font-bold uppercase tracking-wider text-[#0A2373]">Manajemen Konten</span>
-            </div>
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Katalog Digital Library
             </h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Kelola koleksi buku bacaan, penulis, penerbit, dan sinopsis buku yang tampil di web publik secara realtime.
-            </p>
         </div>
         <div class="flex items-center gap-2.5">
-            <button 
-                type="button" 
-                onclick="openModal('create-book-modal')" 
+            <a 
+                href="{{ route('admin.library.create') }}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs cursor-pointer"
             >
                 <i class="fa-solid fa-plus text-xs"></i>
                 <span>Tambah Buku</span>
-            </button>
+            </a>
         </div>
     </div>
 
@@ -135,7 +127,7 @@
                     @forelse ($books as $index => $book)
                         <tr class="hover:bg-slate-50/60 transition group">
                             <!-- No Urut Sesuai Halaman -->
-                            <td class="px-4 sm:px-6 py-4 text-center font-mono text-xs text-slate-400">
+                            <td class="px-4 sm:px-6 py-4 text-center font-['Poppins'] font-bold text-xs text-slate-400">
                                 {{ sprintf('%02d', ($books->firstItem() ?? 1) + $index) }}
                             </td>
 
@@ -161,11 +153,9 @@
                                 </div>
                             </td>
 
-                            <!-- Genre -->
-                            <td class="px-4 sm:px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-[#E8EEF8] text-[#0A2373]">
-                                    {{ $book->genre->name ?? '-' }}
-                                </span>
+                            <!-- Genre (Teks biasa tanpa background warna biru) -->
+                            <td class="px-4 sm:px-6 py-4 text-xs font-medium text-slate-700 whitespace-nowrap">
+                                {{ $book->genre->name ?? '-' }}
                             </td>
 
                             <!-- Publisher -->
@@ -177,31 +167,14 @@
                             <!-- Actions -->
                             <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1">
-                                    <!-- Link langsung ke web user dengan filter buku terpilih -->
+                                    <!-- Halaman detail khusus pengeditan -->
                                     <a 
-                                        href="{{ route('library.index', ['book' => $book->title]) }}" 
-                                        target="_blank" 
+                                        href="{{ route('admin.library.edit', $book->id) }}" 
                                         class="p-2 rounded-lg text-slate-400 hover:text-[#0A2373] hover:bg-slate-100 transition" 
-                                        title="Pratinjau di web publik"
-                                    >
-                                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                                    </a>
-                                    <button 
-                                        type="button" 
-                                        onclick="openEditBookModal({{ json_encode([
-                                            'id' => $book->id,
-                                            'title' => $book->title,
-                                            'author' => $book->author->name ?? '',
-                                            'publisher' => $book->publisher->name ?? '',
-                                            'genre' => $book->genre->name ?? '',
-                                            'description' => $book->description ?? '',
-                                            'cover_path' => $book->cover_path,
-                                        ]) }})" 
-                                        class="p-2 rounded-lg text-slate-400 hover:text-[#0A2373] hover:bg-slate-100 transition cursor-pointer" 
-                                        title="Edit buku"
+                                        title="Edit buku (Halaman Detail)"
                                     >
                                         <i class="fa-regular fa-pen-to-square text-xs"></i>
-                                    </button>
+                                    </a>
                                     <button 
                                         type="button" 
                                         onclick="confirmDeleteBook({{ $book->id }}, '{{ addslashes($book->title) }}')" 
@@ -252,13 +225,13 @@
                     <!-- Nomor Halaman -->
                     @for ($p = 1; $p <= $books->lastPage(); $p++)
                         @if ($p == $books->currentPage())
-                            <span class="px-3 py-1.5 rounded-lg bg-[#0A2373] text-white font-semibold">
+                            <span class="px-3 py-1.5 rounded-lg bg-[#0A2373] text-white font-['Poppins'] font-bold text-xs">
                                 {{ $p }}
                             </span>
                         @else
                             <a 
                                 href="{{ $books->url($p) }}" 
-                                class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+                                class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition font-['Poppins'] font-bold text-xs"
                             >
                                 {{ $p }}
                             </a>
@@ -301,7 +274,6 @@
             <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                 <div>
                     <h3 class="text-base sm:text-lg font-bold text-slate-900">Tambah Koleksi Buku</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Lengkapi informasi buku untuk katalog Digital Library web publik.</p>
                 </div>
                 <button type="button" onclick="closeModal('create-book-modal')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
                     <i class="fa-solid fa-xmark text-base"></i>
@@ -372,7 +344,6 @@
             <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
                 <div>
                     <h3 class="text-base sm:text-lg font-bold text-slate-900">Edit Informasi Buku</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Perbarui metadata katalog buku.</p>
                 </div>
                 <button type="button" onclick="closeModal('edit-book-modal')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
                     <i class="fa-solid fa-xmark text-base"></i>
@@ -476,11 +447,12 @@
     }
 
     function confirmDeleteBook(id, title) {
-        if (confirm(`Apakah Anda yakin ingin menghapus buku "${title}" dari katalog? Data akan dihapus dari database dan web publik.`)) {
+        if (confirm(`Apakah Anda yakin ingin menghapus buku "${title}" dari katalog? Data akan dihapus secara permanen.`)) {
             const form = document.getElementById('delete-book-form');
             form.action = '{{ url('/admin/library') }}/' + id;
             form.submit();
         }
     }
+    
 </script>
 @endpush

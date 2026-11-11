@@ -14,7 +14,7 @@
             <a class="{{ request()->is('publication*') ? 'active' : '' }}" href="{{ route('publications.index') }}">Publication</a>
             <a class="{{ request()->is('digital-library*') ? 'active' : '' }}" href="{{ route('library.index') }}">Digital Library</a>
             <a class="{{ request()->is('join-us*') ? 'active' : '' }}" href="{{ route('join-us') }}">Join Us</a>
-            <a href="#media-partner">Media Partner</a>
+            <a class="{{ request()->is('partnership*') ? 'active' : '' }}" href="{{ route('partnership') }}">Partnership</a>
         </nav>
     </div>
 </header>

@@ -10,8 +10,8 @@
             <article class="join-choice-card">
                 <i class="fa-solid fa-people-group" aria-hidden="true"></i>
                 <h2>Ikut Volunteer</h2>
-                <p>Bergabung sebagai pendamping membaca dan penggerak kegiatan komunitas.</p>
-                <a class="btn btn-primary" href="{{ route('join-us.events') }}">Kenali kegiatan relawan</a>
+                <p>{{ $settings['volunteer']['description'] ?? 'Bergabung sebagai pendamping membaca dan penggerak kegiatan komunitas.' }}</p>
+                <a class="btn btn-primary" href="{{ !empty($settings['volunteer']['form_link']) ? $settings['volunteer']['form_link'] : route('join-us.events') }}" @if(!empty($settings['volunteer']['form_link'])) target="_blank" rel="noopener" @endif>Daftar relawan</a>
             </article>
             <article class="join-choice-card">
                 <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
@@ -22,8 +22,8 @@
             <article class="join-choice-card">
                 <i class="fa-solid fa-handshake" aria-hidden="true"></i>
                 <h2>Ajukan Kerja Sama Kolaborasi</h2>
-                <p>Buka peluang kemitraan program, publikasi, atau dukungan operasional.</p>
-                <a class="btn btn-primary" href="{{ route('about') }}">Kenali komunitas</a>
+                <p>{{ $settings['collaboration']['description'] ?? 'Buka peluang kemitraan program, publikasi, atau dukungan operasional.' }}</p>
+                <a class="btn btn-primary" href="{{ !empty($settings['collaboration']['form_link']) ? $settings['collaboration']['form_link'] : route('about') }}" @if(!empty($settings['collaboration']['form_link'])) target="_blank" rel="noopener" @endif>Ajukan kerja sama</a>
             </article>
         </div>
     </div>

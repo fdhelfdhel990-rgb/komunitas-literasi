@@ -28,7 +28,11 @@
                     <div><dt><i class="fa-regular fa-calendar-xmark" aria-hidden="true"></i> Batas pendaftaran</dt><dd>Belum ditentukan</dd></div>
                 </dl>
                 <div class="event-detail-actions">
-                    <button class="btn event-register" type="button" disabled title="Tautan pendaftaran belum tersedia">Daftar Sekarang</button>
+                    @if (!empty($settings['event']['form_link']) && ($settings['event']['status'] ?? 'Buka') === 'Buka')
+                        <a class="btn event-register" href="{{ $settings['event']['form_link'] }}" target="_blank" rel="noopener">Daftar Sekarang</a>
+                    @else
+                        <button class="btn event-register" type="button" disabled title="Tautan pendaftaran belum tersedia">Daftar Sekarang</button>
+                    @endif
                     <a class="event-link" href="{{ route('join-us.events') }}">Kembali ke daftar event</a>
                 </div>
                 <p class="event-footnote">Informasi ini merupakan gambaran kegiatan. Jadwal, pendaftaran, dan juknis akan diperbarui setelah tersedia informasi resmi.</p>

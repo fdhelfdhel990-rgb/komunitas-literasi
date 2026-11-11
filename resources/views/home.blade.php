@@ -21,10 +21,51 @@
         <p class="eyebrow">Jejak &amp; Capaian Nyata</p>
         <h2>Data Komunitas Berdasarkan Fakta Lapangan</h2>
         <div class="stats-grid">
-            <div class="stat-item"><span>Ber-dampak Positif ke</span><strong><span class="stat-prefix" aria-hidden="true">≥</span><span data-count-to="400">0</span><span class="sr-only">Lebih dari atau sama dengan 400</span></strong><small>Anak</small></div>
-            <div class="stat-item"><span>Koleksi Bacaan</span><strong><span class="stat-prefix" aria-hidden="true">±</span><span data-count-to="500">0</span><span class="sr-only">Sekitar 500</span></strong><small>Buku</small></div>
-            <div class="stat-item"><span>Sukarelawan Aktif</span><strong data-count-to="20">0</strong><small>Remaja</small></div>
-            <div class="stat-item"><span>Perpustakaan Desa</span><strong data-count-to="2">0</strong><small>Lokasi Binaan</small></div>
+            <div class="stat-card">
+                <div class="stat-icon-wrap">
+                    <img src="{{ asset('assets/images/media-partner/icon-park--positive-dynamics.svg') }}" alt="Berdampak Positif ke" class="stat-svg-icon" width="26" height="26">
+                </div>
+                <div class="stat-number">
+                    <span class="stat-prefix" aria-hidden="true">&ge;</span><span data-count-to="{{ $settings['stats']['impact_number'] ?? 400 }}">0</span>
+                    <span class="sr-only">Lebih dari atau sama dengan 400</span>
+                </div>
+                <div class="stat-label">Berdampak Positif ke</div>
+                <div class="stat-desc">Anak</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap">
+                    <img src="{{ asset('assets/images/media-partner/andrsrxn--library.svg') }}" alt="Koleksi Bacaan" class="stat-svg-icon" width="26" height="26">
+                </div>
+                <div class="stat-number">
+                    <span class="stat-prefix" aria-hidden="true">&plusmn;</span><span data-count-to="{{ $settings['stats']['book_number'] ?? 500 }}">0</span>
+                    <span class="sr-only">Sekitar 500</span>
+                </div>
+                <div class="stat-label">Koleksi Bacaan</div>
+                <div class="stat-desc">Buku</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap">
+                    <img src="{{ asset('assets/images/media-partner/boxicons--community-filled.svg') }}" alt="Sukarelawan Aktif" class="stat-svg-icon" width="26" height="26">
+                </div>
+                <div class="stat-number">
+                    <span data-count-to="{{ $settings['stats']['volunteers_number'] ?? 20 }}">0</span>
+                </div>
+                <div class="stat-label">Sukarelawan Aktif</div>
+                <div class="stat-desc">Remaja</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap">
+                    <img src="{{ asset('assets/images/media-partner/cil--library-building.svg') }}" alt="Perpustakaan Desa" class="stat-svg-icon" width="26" height="26">
+                </div>
+                <div class="stat-number">
+                    <span data-count-to="{{ $settings['stats']['libraries_number'] ?? 2 }}">0</span>
+                </div>
+                <div class="stat-label">Perpustakaan Desa</div>
+                <div class="stat-desc">Lokasi Binaan</div>
+            </div>
         </div>
     </div>
 </section>
@@ -33,18 +74,23 @@
     <div class="container">
         <h2>Media Partner</h2>
         <div class="partner-carousel" data-partner-carousel role="region" aria-roledescription="carousel" aria-label="Logo media partner">
-            <button class="carousel-arrow" type="button" aria-label="Mitra sebelumnya" data-partner-direction="previous">‹</button>
+            <button class="carousel-nav-btn carousel-arrow" type="button" aria-label="Mitra sebelumnya" data-partner-direction="previous">
+                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+            </button>
             <div class="partner-viewport" data-partner-viewport>
                 <div class="partner-track" data-partner-track>
                     <div class="partner-set" data-partner-set>
-                        <div class="partner-logo"><img src="{{ asset('assets/images/partners/kementrian.jpg') }}" alt="Kementerian Pendidikan" loading="lazy" decoding="async"></div>
-                        <div class="partner-logo"><img src="{{ asset('assets/images/partners/ugm.png') }}" alt="Universitas Gadjah Mada" loading="lazy" decoding="async"></div>
-                        <div class="partner-logo"><img src="{{ asset('assets/images/partners/bri-peduli.png') }}" alt="BRI Peduli" loading="lazy" decoding="async"></div>
-                        <div class="partner-logo"><img src="{{ asset('assets/images/partners/kmtedi.jpg') }}" alt="KMTEDI" loading="lazy" decoding="async"></div>
+                        @foreach ($mediaPartners ?? \App\Http\Controllers\MediaPartnerController::getPartners() as $partner)
+                            <div class="partner-card partner-logo">
+                                <img src="{{ asset('assets/images/partners/'.$partner['logo']) }}" alt="{{ $partner['name'] }}" title="{{ $partner['name'] }}" loading="lazy" decoding="async">
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
-            <button class="carousel-arrow" type="button" aria-label="Mitra berikutnya" data-partner-direction="next">›</button>
+            <button class="carousel-nav-btn carousel-arrow" type="button" aria-label="Mitra berikutnya" data-partner-direction="next">
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+            </button>
         </div>
     </div>
 </section>
@@ -78,12 +124,17 @@
         <div class="card-grid four">
             @forelse ($latestBooks ?? [] as $book)
                 <article class="book-card">
-                    <img src="{{ \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://']) ? $book->cover_path : ($book->cover_path ? asset('assets/images/books/'.$book->cover_path) : 'https://placehold.co/400x600?text=No+Cover') }}" alt="Sampul buku {{ $book->title }}" loading="lazy" decoding="async">
+                    <div class="book-cover-wrap">
+                        <img src="{{ \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://']) ? $book->cover_path : ($book->cover_path ? asset('assets/images/books/'.$book->cover_path) : 'https://placehold.co/400x600?text=No+Cover') }}" alt="Sampul buku {{ $book->title }}" loading="lazy" decoding="async">
+                    </div>
                     <div class="book-body">
-                        <span>{{ $book->title }}</span>
-                        <strong>{{ $book->author->name }}</strong>
-                        <small>{{ $book->genre->name }}</small>
-                        <a href="{{ route('library.index', ['book' => $book->title]) }}">Lihat Detail</a>
+                        <span class="book-title" title="{{ $book->title }}">{{ $book->title }}</span>
+                        <strong class="book-author" title="{{ $book->author->name }}">{{ $book->author->name }}</strong>
+                        <small class="book-genre">{{ $book->genre->name }}</small>
+                        <a class="book-detail-link" href="{{ route('library.index', ['book' => $book->title]) }}">
+                            <span>Lihat Detail</span>
+                            <i class="fa-solid fa-arrow-right text-[11px]" aria-hidden="true"></i>
+                        </a>
                     </div>
                 </article>
             @empty

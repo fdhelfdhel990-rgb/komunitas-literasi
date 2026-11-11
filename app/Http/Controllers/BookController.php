@@ -106,7 +106,19 @@ class BookController extends Controller
      */
     public function create()
     {
-        return redirect()->route('admin.library.index');
+        return redirect()->route('admin.library.create');
+    }
+
+    /**
+     * Show the dedicated form for creating a new book in admin.
+     */
+    public function createAdmin()
+    {
+        $genres = Genre::pluck('name')->toArray();
+        $publishers = Publisher::pluck('name')->toArray();
+        $authors = Author::pluck('name')->toArray();
+
+        return view('admin.library.create', compact('genres', 'publishers', 'authors'));
     }
 
     /**
@@ -161,11 +173,24 @@ class BookController extends Controller
     }
 
     /**
+     * Show the dedicated form for editing the specified book in admin.
+     */
+    public function editAdmin(string $id)
+    {
+        $book = Book::with(['author', 'publisher', 'genre'])->findOrFail($id);
+        $genres = Genre::pluck('name')->toArray();
+        $publishers = Publisher::pluck('name')->toArray();
+        $authors = Author::pluck('name')->toArray();
+
+        return view('admin.library.edit', compact('book', 'genres', 'publishers', 'authors'));
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
-        return redirect()->route('admin.library.index');
+        return redirect()->route('admin.library.edit', $id);
     }
 
     /**
@@ -182,6 +207,7 @@ class BookController extends Controller
             'genre_name' => 'required|string|max:255',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'description' => 'nullable|string',
+            'remove_cover' => 'nullable|boolean',
         ]);
 
         $author = Author::firstOrCreate(['name' => trim($request->author_name)]);
@@ -196,6 +222,13 @@ class BookController extends Controller
             'genre_id' => $genre->id,
             'description' => $request->description,
         ];
+
+        if ($request->boolean('remove_cover')) {
+            if ($book->cover_path && file_exists(public_path('assets/images/books/'.$book->cover_path))) {
+                @unlink(public_path('assets/images/books/'.$book->cover_path));
+            }
+            $data['cover_path'] = null;
+        }
 
         if ($request->hasFile('cover_image')) {
             $file = $request->file('cover_image');

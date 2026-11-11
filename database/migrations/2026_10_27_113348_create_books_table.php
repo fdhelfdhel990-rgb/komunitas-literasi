@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('books', function (Blueprint $table) {
@@ -23,8 +20,8 @@ return new class extends Migration
             $table->string('cover_path')->nullable();
             $table->boolean('is_published')->default(true);
 
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade'); 
-            
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

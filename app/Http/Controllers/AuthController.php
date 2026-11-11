@@ -46,6 +46,12 @@ class AuthController extends Controller
             ->first();
 
         if ($user && Hash::check($password, $user->password)) {
+            if ($user->status === 'pending') {
+                throw ValidationException::withMessages([
+                    'email' => 'Akun Anda masih dalam status Pending dan menunggu persetujuan dari Super Admin.',
+                ]);
+            }
+
             RateLimiter::clear($this->throttleKey($request));
 
             Auth::login($user, $remember);

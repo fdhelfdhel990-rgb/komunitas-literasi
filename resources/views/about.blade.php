@@ -36,27 +36,48 @@
 
 <section class="section journey-section">
     <div class="container">
-        <p class="eyebrow">Perjalanan Kami</p>
-        <h2>Gerakan yang tumbuh dari kepedulian</h2>
+        <p class="eyebrow">Publikasi Pilihan</p>
+        <h2>Kabar &amp; Perjalanan Gerakan Literasi</h2>
         <div class="card-grid two">
-            <article class="journey-card">
-                <img src="{{ asset('assets/images/about/journey-1.jpg') }}" alt="" loading="lazy" decoding="async">
-                <div class="card-body">
-                    <span class="card-label">Program</span>
-                    <h3>Gerobak Angkasa: Perpustakaan Keliling Komunitas</h3>
-                    <p>Gerobak Angkasa membawa ratusan buku bacaan anak langsung ke lingkungan tempat tinggal mereka di enam desa dan satu kelurahan.</p>
-                    <a class="btn btn-primary" href="{{ route('join-us') }}">Bergabung mendampingi →</a>
-                </div>
-            </article>
-            <article class="journey-card">
-                <img src="{{ asset('assets/images/about/journey-2.jpg') }}" alt="" loading="lazy" decoding="async">
-                <div class="card-body">
-                    <span class="card-label">Kegiatan</span>
-                    <h3>Gerobak Angkasa: Perpustakaan Keliling Komunitas</h3>
-                    <p>Dipandu oleh 20 relawan aktif, kegiatan membaca bersama turut menghidupkan ruang belajar bagi lebih dari 400 anak.</p>
-                    <a class="btn btn-primary" href="#publication">Lihat kegiatan →</a>
-                </div>
-            </article>
+            @forelse ($latestPublications ?? [] as $pub)
+                <a class="journey-card" href="{{ route('publications.show', $pub->slug) }}" style="display: flex; flex-direction: column; text-decoration: none; color: inherit; cursor: pointer;">
+                    <div style="overflow: hidden; background: #f1f5f9;">
+                        <img 
+                            src="{{ \Illuminate\Support\Str::startsWith($pub->featured_image_path, ['http://', 'https://']) ? $pub->featured_image_path : ($pub->featured_image_path ? asset('assets/images/publications/'.$pub->featured_image_path) : asset('assets/images/about/journey-1.jpg')) }}" 
+                            alt="{{ $pub->title }}" 
+                            loading="lazy" 
+                            decoding="async"
+                            style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;"
+                        >
+                    </div>
+                    <div class="card-body" style="display: flex; flex-direction: column; flex: 1;">
+                        <span class="card-label">{{ $pub->category ?? 'Publikasi' }} · {{ \Carbon\Carbon::parse($pub->published_at)->translatedFormat('d F Y') }}</span>
+                        <h3>{{ $pub->title }}</h3>
+                        <p>{{ \Illuminate\Support\Str::limit($pub->excerpt ?? strip_tags($pub->content), 130) }}</p>
+                    </div>
+                </a>
+            @empty
+                <a class="journey-card" href="{{ route('publications.index') }}" style="display: flex; flex-direction: column; text-decoration: none; color: inherit; cursor: pointer;">
+                    <div style="overflow: hidden; background: #f1f5f9;">
+                        <img src="{{ asset('assets/images/about/journey-1.jpg') }}" alt="Gerobak Angkasa Perpustakaan Keliling" loading="lazy" decoding="async" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+                    </div>
+                    <div class="card-body">
+                        <span class="card-label">Program Unggulan</span>
+                        <h3>Gerobak Angkasa: Perpustakaan Keliling Komunitas</h3>
+                        <p>Gerobak Angkasa membawa ratusan buku bacaan anak langsung ke lingkungan tempat tinggal mereka di Tambun Selatan.</p>
+                    </div>
+                </a>
+                <a class="journey-card" href="{{ route('publications.index') }}" style="display: flex; flex-direction: column; text-decoration: none; color: inherit; cursor: pointer;">
+                    <div style="overflow: hidden; background: #f1f5f9;">
+                        <img src="{{ asset('assets/images/about/journey-2.jpg') }}" alt="Kelas Membaca dan Dokumentasi Relawan" loading="lazy" decoding="async" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+                    </div>
+                    <div class="card-body">
+                        <span class="card-label">Aktivitas Literasi</span>
+                        <h3>Kelas Membaca &amp; Dokumentasi Relawan</h3>
+                        <p>Kegiatan membaca bersama dan mendongeng rutin diselenggarakan untuk menghidupkan minat baca anak-anak binaan.</p>
+                    </div>
+                </a>
+            @endforelse
         </div>
     </div>
 </section>

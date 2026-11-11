@@ -37,6 +37,9 @@ class HomeController extends Controller
             $latestBooks = collect();
         }
 
-        return view('home', compact('latestPublications', 'latestBooks'));
+        $mediaPartners = MediaPartnerController::getPartners();
+        $settings = SettingController::getSettings();
+
+        return view('home', compact('latestPublications', 'latestBooks', 'mediaPartners', 'settings'));
     }
 }

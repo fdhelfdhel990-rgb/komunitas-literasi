@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <g transform="translate(10, 8)">
+    <!-- Pertamina Emblem: Red, Green, Blue parallelograms -->
+    <!-- Red top rhombus -->
+    <path d="M42 4 L64 4 L48 30 L26 30 Z" fill="#E5232A"/>
+    <!-- Green right curved rhombus -->
+    <path d="M48 33 L68 33 L58 58 L40 58 Z" fill="#88C13F"/>
+    <!-- Blue left curve -->
+    <path d="M22 34 L38 34 L18 64 L2 64 Z" fill="#0080C8"/>
+  </g>
+  <!-- PERTAMINA Text -->
+  <text x="90" y="52" font-family="'Poppins', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#0E2E4A" letter-spacing="1">PERTAMINA</text>
+</svg>

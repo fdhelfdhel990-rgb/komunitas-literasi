@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" width="240" height="80">
+  <g font-family="'Poppins', 'Arial Black', sans-serif" font-weight="900" font-style="italic">
+    <!-- K in Navy Blue -->
+    <text x="15" y="60" font-size="64" fill="#0A2373" letter-spacing="-2">K</text>
+    <!-- A in Orange with arrow-like slant -->
+    <text x="80" y="60" font-size="64" fill="#F57C00" letter-spacing="-2">A</text>
+    <!-- I in Navy Blue with orange cross-accent -->
+    <text x="145" y="60" font-size="64" fill="#0A2373" letter-spacing="-2">I</text>
+  </g>
+  <path d="M125 18 L195 48 L170 48 L105 24 Z" fill="#F57C00" opacity="0.9"/>
+</svg>
