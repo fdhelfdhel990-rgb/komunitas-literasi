@@ -54,7 +54,7 @@
         <h2>Publikasi &amp; Kabar Kegiatan</h2>
         <p class="section-subtitle">Dokumentasi perjalanan, artikel edukatif, dan liputan berita komunitas.</p>
         <div class="card-grid three">
-            @forelse ($latestPublications as $pub)
+            @forelse ($latestPublications ?? [] as $pub)
                 <a class="content-card publication-card" href="{{ route('publications.show', $pub->slug) }}" aria-label="Baca berita: {{ $pub->title }}">
                     <img src="{{ \Illuminate\Support\Str::startsWith($pub->featured_image_path, ['http://', 'https://']) ? $pub->featured_image_path : ($pub->featured_image_path ? asset('assets/images/publications/'.$pub->featured_image_path) : 'https://placehold.co/600x400?text=No+Image') }}" alt="{{ $pub->title }}" loading="lazy" decoding="async">
                     <div class="card-body">
@@ -76,7 +76,7 @@
         <h2>Koleksi Buku Terkini</h2>
         <p class="section-subtitle">Pilihan buku terbaru yang baru ditambahkan oleh komunitas.</p>
         <div class="card-grid four">
-            @forelse ($latestBooks as $book)
+            @forelse ($latestBooks ?? [] as $book)
                 <article class="book-card">
                     <img src="{{ \Illuminate\Support\Str::startsWith($book->cover_path, ['http://', 'https://']) ? $book->cover_path : ($book->cover_path ? asset('assets/images/books/'.$book->cover_path) : 'https://placehold.co/400x600?text=No+Cover') }}" alt="Sampul buku {{ $book->title }}" loading="lazy" decoding="async">
                     <div class="book-body">

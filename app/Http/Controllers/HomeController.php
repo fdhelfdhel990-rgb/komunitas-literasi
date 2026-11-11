@@ -2,24 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Models\Publication;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $latestPublications = Publication::where('status', 'published')
-            ->latest('published_at')
-            ->take(3)
-            ->get();
+        $latestPublications = collect();
+        $latestBooks = collect();
 
-        $latestBooks = Book::with(['author', 'genre'])
-            ->where('is_published', true)
-            ->latest()
-            ->take(4)
-            ->get();
+        try {
+            if (Schema::hasTable('publications')) {
+                $latestPublications = Publication::where('status', 'published')
+                    ->latest('published_at')
+                    ->take(3)
+                    ->get();
+            }
+        } catch (Throwable) {
+            $latestPublications = collect();
+        }
+
+        try {
+            if (Schema::hasTable('books')) {
+                $latestBooks = Book::with(['author', 'genre'])
+                    ->where('is_published', true)
+                    ->latest()
+                    ->take(4)
+                    ->get();
+            }
+        } catch (Throwable) {
+            $latestBooks = collect();
+        }
 
         return view('home', compact('latestPublications', 'latestBooks'));
     }
