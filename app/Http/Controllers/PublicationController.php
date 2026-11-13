@@ -212,8 +212,12 @@ class PublicationController extends Controller
         }
 
         if ($request->hasFile('featured_image')) {
+            if ($publication->featured_image_path && file_exists(public_path('assets/images/publications/' . $publication->featured_image_path))) {
+                @unlink(public_path('assets/images/publications/' . $publication->featured_image_path));
+            }
+
             $file = $request->file('featured_image');
-            $imageName = time().'-'.Str::random(6).'-'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
+            $imageName = time() . '-' . Str::random(6) . '-' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('assets/images/publications'), $imageName);
             $publication->featured_image_path = $imageName;
         }
