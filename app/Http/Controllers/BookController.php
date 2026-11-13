@@ -235,7 +235,6 @@ class BookController extends Controller
         $directory = public_path('assets/images/books');
         $coverPath = $book->cover_path;
 
-        // Jika tombol "Hapus" sampul diklik di form edit
         if ($request->input('remove_cover') === '1' && !$request->hasFile('cover_image')) {
             if ($book->cover_path && file_exists($directory . '/' . $book->cover_path)) {
                 @unlink($directory . '/' . $book->cover_path);
@@ -243,7 +242,6 @@ class BookController extends Controller
             $coverPath = null;
         }
 
-        // Jika mengunggah sampul baru
         if ($request->hasFile('cover_image')) {
             if (!file_exists($directory)) {
                 mkdir($directory, 0755, true);

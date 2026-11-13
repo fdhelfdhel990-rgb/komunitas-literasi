@@ -24,7 +24,7 @@
                 <h1>{{ $publication->title }}</h1>
                 <p class="publication-article-date"><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ \Carbon\Carbon::parse($publication->published_at)->translatedFormat('l, d F Y') }}</p>
                 <div class="publication-article-copy">
-                    {!! str_contains($publication->content, '<p>') ? $publication->content : nl2br(e($publication->content)) !!}
+                    {!! strip_tags($publication->content) !== $publication->content ? $publication->content : nl2br(e($publication->content)) !!}
                 </div>
             </article>
             <aside class="publication-sidebar">
