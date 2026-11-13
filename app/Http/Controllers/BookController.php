@@ -8,59 +8,60 @@ use App\Models\Genre;
 use App\Models\Publisher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class BookController extends Controller
 {
     public function indexPublic(Request $request)
     {
-        if ($request->has('book')) {
-            $selectedBook = Book::with(['author', 'publisher', 'genre'])
-                ->where('title', $request->query('book'))
-                ->first();
+        $query = Book::with(['author', 'publisher', 'genre'])
+            ->where('is_published', true);
 
-            return view('library.index', compact('selectedBook'));
+        if ($request->filled('genre')) {
+            $genreName = $request->query('genre');
+            $query->whereHas('genre', function ($q) use ($genreName) {
+                $q->where('name', $genreName);
+            });
         }
 
-        $query = Book::with(['author', 'publisher', 'genre'])->where('is_published', true);
+        if ($request->filled('publisher')) {
+            $publisherName = $request->query('publisher');
+            $query->whereHas('publisher', function ($q) use ($publisherName) {
+                $q->where('name', $publisherName);
+            });
+        }
 
-        if ($request->has('q') && $request->query('q') !== '') {
+        if ($request->filled('q')) {
             $keyword = $request->query('q');
-            $query->where('title', 'LIKE', "%{$keyword}%")
-                ->orWhereHas('author', function ($q) use ($keyword) {
-                    $q->where('name', 'LIKE', "%{$keyword}%");
-                });
-        }
-
-        if ($request->has('genre') && $request->query('genre') !== '') {
-            $query->whereHas('genre', function ($q) use ($request) {
-                $q->where('name', $request->query('genre'));
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'LIKE', "%{$keyword}%")
+                    ->orWhereHas('author', function ($sub) use ($keyword) {
+                        $sub->where('name', 'LIKE', "%{$keyword}%");
+                    });
             });
         }
 
-        if ($request->has('publisher') && $request->query('publisher') !== '') {
-            $query->whereHas('publisher', function ($q) use ($request) {
-                $q->where('name', $request->query('publisher'));
-            });
+        $paginatedBooks = $query->latest()->paginate(6)->withQueryString();
+
+        $selectedBook = null;
+        if ($request->filled('book')) {
+            $selectedBook = Book::with(['author', 'publisher', 'genre'])
+                ->where('is_published', true)
+                ->where('slug', $request->query('book'))
+                ->first();
         }
 
-        if ($request->query('sort') === 'za') {
-            $query->orderBy('title', 'desc');
-        } else {
-            $query->orderBy('title', 'asc');
-        }
+        $genres = Genre::orderBy('name')->pluck('name');
+        $publishers = Publisher::orderBy('name')->pluck('name');
 
-        $genres = Genre::pluck('name');
-        $publishers = Publisher::pluck('name');
-
-        $paginatedBooks = $query->paginate(6)->withQueryString();
-
-        return view('library.index', [
-            'paginatedBooks' => $paginatedBooks,
-            'genres' => $genres,
-            'publishers' => $publishers,
-            'selectedBook' => null,
-        ]);
+        return view('library.index', compact(
+            'paginatedBooks',
+            'selectedBook',
+            'genres',
+            'publishers'
+        ));
     }
+
 
     /**
      * Display a listing of the resource for the admin panel.
@@ -106,7 +107,11 @@ class BookController extends Controller
      */
     public function create()
     {
-        return redirect()->route('admin.library.create');
+        $authors    = Author::orderBy('name')->pluck('name');
+        $publishers = Publisher::orderBy('name')->pluck('name');
+        $genres     = Genre::orderBy('name')->pluck('name');
+
+        return view('admin.library.create', compact('authors', 'publishers', 'genres'));
     }
 
     /**
@@ -126,40 +131,48 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'author_name' => 'required|string|max:255',
-            'publisher_name' => 'required|string|max:255',
-            'genre_name' => 'required|string|max:255',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
-            'description' => 'nullable|string',
+        $validated = $request->validate([
+            'title'          => ['required', 'string', 'max:255'],
+            'author_name'    => ['required', 'string', 'max:255'],
+            'publisher_name' => ['required', 'string', 'max:255'],
+            'genre_name'     => ['required', 'string', 'max:255'],
+            'isbn'           => ['nullable', 'string', 'max:50', 'unique:books,isbn'],
+            'description'    => ['nullable', 'string'],
+            'cover_image'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
         ]);
 
-        $author = Author::firstOrCreate(['name' => trim($request->author_name)]);
-        $publisher = Publisher::firstOrCreate(['name' => trim($request->publisher_name)]);
-        $genre = Genre::firstOrCreate(['name' => trim($request->genre_name)]);
+        $author    = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
+        $publisher = Publisher::firstOrCreate(['name' => trim($validated['publisher_name'])]);
+        $genre     = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
 
-        $coverPath = 'book-1.jpg';
+        $coverPath = null;
         if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-            $filename = 'book_'.time().'_'.Str::random(5).'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('assets/images/books'), $filename);
+            $file      = $request->file('cover_image');
+            $directory = public_path('assets/images/books');
+
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file->move($directory, $filename);
             $coverPath = $filename;
         }
 
         Book::create([
-            'title' => $request->title,
-            'slug' => Str::slug($request->title).'-'.Str::random(4),
-            'author_id' => $author->id,
+            'title'        => $validated['title'],
+            'slug'         => $this->generateUniqueSlug($validated['title']),
+            'author_id'    => $author->id,
             'publisher_id' => $publisher->id,
-            'genre_id' => $genre->id,
-            'cover_path' => $coverPath,
-            'description' => $request->description,
+            'genre_id'     => $genre->id,
+            'isbn'         => $validated['isbn'] ?? null,
+            'description'  => $validated['description'] ?? null,
+            'cover_path'   => $coverPath,
             'is_published' => true,
-            'created_by' => auth()->id() ?? 1,
+            'created_by'   => Auth::id(),
         ]);
 
-        return redirect()->route('admin.library.index')->with('success', 'Buku "'.$request->title.'" berhasil ditambahkan ke katalog!');
+        return redirect()->route('admin.library.index')->with('success', 'Buku berhasil ditambahkan.');
     }
 
     /**
@@ -188,69 +201,111 @@ class BookController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Book $book)
     {
-        return redirect()->route('admin.library.edit', $id);
+        $book->load(['author', 'publisher', 'genre']);
+
+        $authors    = Author::orderBy('name')->pluck('name');
+        $publishers = Publisher::orderBy('name')->pluck('name');
+        $genres     = Genre::orderBy('name')->pluck('name');
+
+        return view('admin.library.edit', compact('book', 'authors', 'publishers', 'genres'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Book $book)
     {
-        $book = Book::findOrFail($id);
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'author_name' => 'required|string|max:255',
-            'publisher_name' => 'required|string|max:255',
-            'genre_name' => 'required|string|max:255',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
-            'description' => 'nullable|string',
-            'remove_cover' => 'nullable|boolean',
+        $validated = $request->validate([
+            'title'          => ['required', 'string', 'max:255'],
+            'author_name'    => ['required', 'string', 'max:255'],
+            'publisher_name' => ['required', 'string', 'max:255'],
+            'genre_name'     => ['required', 'string', 'max:255'],
+            'isbn'           => ['nullable', 'string', 'max:50', 'unique:books,isbn,' . $book->id],
+            'description'    => ['nullable', 'string'],
+            'cover_image'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'remove_cover'   => ['nullable', 'in:0,1'],
         ]);
 
-        $author = Author::firstOrCreate(['name' => trim($request->author_name)]);
-        $publisher = Publisher::firstOrCreate(['name' => trim($request->publisher_name)]);
-        $genre = Genre::firstOrCreate(['name' => trim($request->genre_name)]);
+        $author    = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
+        $publisher = Publisher::firstOrCreate(['name' => trim($validated['publisher_name'])]);
+        $genre     = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
 
-        $data = [
-            'title' => $request->title,
-            'slug' => Str::slug($request->title).'-'.Str::random(4),
-            'author_id' => $author->id,
-            'publisher_id' => $publisher->id,
-            'genre_id' => $genre->id,
-            'description' => $request->description,
-        ];
+        $directory = public_path('assets/images/books');
+        $coverPath = $book->cover_path;
 
-        if ($request->boolean('remove_cover')) {
-            if ($book->cover_path && file_exists(public_path('assets/images/books/'.$book->cover_path))) {
-                @unlink(public_path('assets/images/books/'.$book->cover_path));
+        // Jika tombol "Hapus" sampul diklik di form edit
+        if ($request->input('remove_cover') === '1' && !$request->hasFile('cover_image')) {
+            if ($book->cover_path && file_exists($directory . '/' . $book->cover_path)) {
+                @unlink($directory . '/' . $book->cover_path);
             }
-            $data['cover_path'] = null;
+            $coverPath = null;
         }
 
+        // Jika mengunggah sampul baru
         if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-            $filename = 'book_'.time().'_'.Str::random(5).'.'.$file->getClientOriginalExtension();
-            $file->move(public_path('assets/images/books'), $filename);
-            $data['cover_path'] = $filename;
+            if (!file_exists($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            if ($book->cover_path && file_exists($directory . '/' . $book->cover_path)) {
+                @unlink($directory . '/' . $book->cover_path);
+            }
+
+            $file     = $request->file('cover_image');
+            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file->move($directory, $filename);
+            $coverPath = $filename;
         }
 
-        $book->update($data);
+        $slug = $book->title !== $validated['title']
+            ? $this->generateUniqueSlug($validated['title'], $book->id)
+            : $book->slug;
 
-        return redirect()->route('admin.library.index')->with('success', 'Data buku "'.$book->title.'" berhasil diperbarui!');
+        $book->update([
+            'title'        => $validated['title'],
+            'slug'         => $slug,
+            'author_id'    => $author->id,
+            'publisher_id' => $publisher->id,
+            'genre_id'     => $genre->id,
+            'isbn'         => $validated['isbn'] ?? null,
+            'description'  => $validated['description'] ?? null,
+            'cover_path'   => $coverPath,
+        ]);
+
+        return redirect()->route('admin.library.index')->with('success', 'Data buku berhasil diperbarui.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Book $book)
     {
-        $book = Book::findOrFail($id);
-        $title = $book->title;
+        if ($book->cover_path && file_exists(public_path('assets/images/books/' . $book->cover_path))) {
+            @unlink(public_path('assets/images/books/' . $book->cover_path));
+        }
+
         $book->delete();
 
-        return redirect()->route('admin.library.index')->with('success', 'Buku "'.$title.'" berhasil dihapus dari katalog!');
+        return redirect()->route('admin.library.index')->with('success', 'Buku berhasil dihapus.');
+    }
+
+    private function generateUniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $baseSlug = Str::slug($title);
+        $slug     = $baseSlug;
+        $counter  = 2;
+
+        while (
+            Book::where('slug', $slug)
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }

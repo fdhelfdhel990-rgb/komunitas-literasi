@@ -72,7 +72,9 @@
                                         <h2>{{ $book->title }}</h2>
                                         <p><i class="fa-regular fa-user" aria-hidden="true"></i> {{ $book->author->name }}</p>
                                         <p><i class="fa-solid fa-book-open" aria-hidden="true"></i> {{ $book->genre->name }}</p>
-                                        <a href="{{ route('library.index', array_merge(request()->query(), ['book' => $book->title])) }}">Lihat Detail <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                                        <a href="{{ route('library.index', array_merge(request()->query(), ['book' => $book->slug])) }}">
+                                            Lihat Detail <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                                        </a>
                                     </div>
                                 </article>
                             @endforeach
