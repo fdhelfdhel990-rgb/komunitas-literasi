@@ -6,7 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'title',
+        'slug',
+        'author_id',
+        'publisher_id',
+        'genre_id',
+        'description',
+        'isbn',
+        'cover_path',
+        'is_published',
+        'created_by',
+    ];
+
+    protected $casts = [
+        'is_published' => 'boolean',
+    ];
 
     public function author()
     {
@@ -22,18 +37,9 @@ class Book extends Model
     {
         return $this->belongsTo(Genre::class, 'genre_id');
     }
-    
-    protected $fillable = [
-        'title',
-        'slug',
-        'author_id',
-        'publisher_id',
-        'genre_id',
-        'description',
-        'isbn',
-        'cover_path',
-        'is_published',
-        'created_by'
-    ];
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

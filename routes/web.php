@@ -25,7 +25,6 @@ Route::get('/about', function () {
 Route::get('/publication', [PublicationController::class, 'index'])->name('publications.index');
 Route::get('/publication/{slug}', [PublicationController::class, 'show'])->name('publications.show');
 
-Route::resource('buku', BookController::class);
 Route::get('/digital-library', [BookController::class, 'indexPublic'])->name('library.index');
 
 Route::get('/join-us', [JoinUsController::class, 'indexPublic'])->name('join-us');
@@ -56,11 +55,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/publications/{id}', [PublicationController::class, 'destroy'])->name('admin.publications.destroy');
 
     Route::get('/admin/library', [BookController::class, 'indexAdmin'])->name('admin.library.index');
-    Route::get('/admin/library/create', [BookController::class, 'createAdmin'])->name('admin.library.create');
-    Route::get('/admin/library/{id}/edit', [BookController::class, 'editAdmin'])->name('admin.library.edit');
+    Route::get('/admin/library/create', [BookController::class, 'create'])->name('admin.library.create');
     Route::post('/admin/library', [BookController::class, 'store'])->name('admin.library.store');
-    Route::put('/admin/library/{id}', [BookController::class, 'update'])->name('admin.library.update');
-    Route::delete('/admin/library/{id}', [BookController::class, 'destroy'])->name('admin.library.destroy');
+    Route::get('/admin/library/{book}/edit', [BookController::class, 'edit'])->name('admin.library.edit');
+    Route::put('/admin/library/{book}', [BookController::class, 'update'])->name('admin.library.update');
+    Route::delete('/admin/library/{book}', [BookController::class, 'destroy'])->name('admin.library.destroy');
 
     Route::get('/admin/join-us', [JoinUsController::class, 'indexAdmin'])->name('admin.join-us.index');
     Route::post('/admin/join-us', [JoinUsController::class, 'updateAdmin'])->name('admin.join-us.update');
