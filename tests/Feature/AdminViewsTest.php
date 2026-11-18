@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\JoinUsController;
+use App\Http\Controllers\MediaPartnerController;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Genre;
@@ -38,12 +40,20 @@ class AdminViewsTest extends TestCase
 
     public function test_admin_users_displays_plain_text_without_badge_classes(): void
     {
-        $response = $this->actingAs($this->admin)->get('/admin/users');
+        // 1. Regular sub-admin is blocked from /admin/users (403 forbidden)
+        $subAdminRes = $this->actingAs($this->admin)->get('/admin/users');
+        $subAdminRes->assertStatus(403);
+
+        // 2. Super admin can access /admin/users
+        $superAdmin = User::factory()->create([
+            'role' => 'super-admin',
+            'status' => 'approved',
+        ]);
+        $response = $this->actingAs($superAdmin)->get('/admin/users');
         $response->assertStatus(200);
         $response->assertSee('Admin');
-        $response->assertSee('Approved');
+        $response->assertSee('Aktif');
         $response->assertDontSee('bg-purple-100');
-        $response->assertDontSee('bg-emerald-50 text-emerald-700 border border-emerald-200');
     }
 
     public function test_admin_settings_does_not_contain_old_sub_descriptions(): void
@@ -271,11 +281,32 @@ class AdminViewsTest extends TestCase
         $response = $this->get('/partnership');
         $response->assertStatus(200);
         $response->assertSee('Partnership');
-        $response->assertSee('Logo Media Partner');
-        $response->assertSee('Ruang Baca Nusantara');
-        $response->assertSee('Pertamina');
-        $response->assertSee('DOKUMENTASI KERJA SAMA');
+        $response->assertSee('Media Partner');
+        $response->assertDontSee('PROFIL MITRA · DATA CONTOH');
+        $response->assertDontSee('DOKUMENTASI KERJA SAMA · DATA CONTOH');
+        $response->assertDontSee('Ruang Baca Nusantara');
+        $response->assertSee('Belum Ada Publikasi Kemitraan');
         $response->assertSee('Ajukan Kerja Sama Kolaborasi');
+    }
+
+    public function test_partnership_page_displays_partnership_publications_and_pagination(): void
+    {
+        Publication::create([
+            'title' => 'Penyaluran Buku Bacaan Bermutu',
+            'slug' => 'penyaluran-buku-bacaan-bermutu',
+            'category' => 'Partnership',
+            'published_at' => now(),
+            'excerpt' => 'Pemberian paket buku bergambar.',
+            'content' => '<p>Konten berita kerja sama.</p>',
+            'status' => 'published',
+            'created_by' => $this->admin->id,
+        ]);
+
+        $response = $this->get('/partnership?partner_page=1&article_page=1');
+        $response->assertStatus(200);
+        $response->assertSee('Media Partner');
+        $response->assertSee('Penyaluran Buku Bacaan Bermutu');
+        $response->assertDontSee('Belum Ada Publikasi Kemitraan');
     }
 
     public function test_home_page_book_cards_are_patent_and_neat(): void
@@ -306,49 +337,63 @@ class AdminViewsTest extends TestCase
 
     public function test_admin_can_crud_users_and_toggle_status(): void
     {
-        // 1. Create a new user
-        $storeRes = $this->actingAs($this->admin)->post('/admin/users', [
+        $superAdmin = User::factory()->create([
+            'role' => 'super-admin',
+            'status' => 'approved',
+        ]);
+
+        // 1. Regular sub-admin cannot create users (403 forbidden)
+        $forbiddenRes = $this->actingAs($this->admin)->post('/admin/users', [
+            'name' => 'Relawan Staff',
+            'email' => 'relawan@literasitamsel.org',
+            'password' => 'secret123',
+            'role' => 'admin',
+        ]);
+        $forbiddenRes->assertStatus(403);
+
+        // 2. Super admin creates a new user
+        $storeRes = $this->actingAs($superAdmin)->post('/admin/users', [
             'name' => 'Relawan Staff',
             'username' => 'relawan_staff',
             'email' => 'relawan@literasitamsel.org',
             'password' => 'secret123',
             'role' => 'admin',
-            'status' => 'pending',
+            'privileges' => ['dashboard', 'publications'],
         ]);
         $storeRes->assertRedirect('/admin/users');
 
         $this->assertDatabaseHas('users', [
             'email' => 'relawan@literasitamsel.org',
-            'status' => 'pending',
+            'status' => 'approved',
         ]);
 
         $user = User::where('email', 'relawan@literasitamsel.org')->first();
 
-        // 2. Toggle status to approved
-        $toggleRes = $this->actingAs($this->admin)->patch('/admin/users/'.$user->id.'/toggle-status');
+        // 3. Toggle status to pending (nonaktif)
+        $toggleRes = $this->actingAs($superAdmin)->patch('/admin/users/'.$user->id.'/toggle-status');
         $toggleRes->assertRedirect('/admin/users');
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'status' => 'approved',
+            'status' => 'pending',
         ]);
 
-        // 3. Update user details
-        $updateRes = $this->actingAs($this->admin)->put('/admin/users/'.$user->id, [
+        // 4. Update user details (status and privileges are editable here)
+        $updateRes = $this->actingAs($superAdmin)->put('/admin/users/'.$user->id, [
             'name' => 'Relawan Senior',
             'username' => 'relawan_senior',
             'email' => 'relawan_senior@literasitamsel.org',
-            'role' => 'super-admin',
             'status' => 'approved',
+            'privileges' => ['dashboard', 'publications', 'library'],
         ]);
         $updateRes->assertRedirect('/admin/users');
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Relawan Senior',
-            'role' => 'super-admin',
+            'status' => 'approved',
         ]);
 
-        // 4. Delete user
-        $deleteRes = $this->actingAs($this->admin)->delete('/admin/users/'.$user->id);
+        // 5. Delete user
+        $deleteRes = $this->actingAs($superAdmin)->delete('/admin/users/'.$user->id);
         $deleteRes->assertRedirect('/admin/users');
         $this->assertSoftDeleted('users', [
             'id' => $user->id,
@@ -428,7 +473,13 @@ class AdminViewsTest extends TestCase
             'whatsapp' => '+62 811-2233-4455',
             'email' => 'info@literasitamsel.org',
             'instagram' => 'https://instagram.com/literasitamsel_official',
+            'instagram_show' => '1',
             'youtube' => 'https://youtube.com/@literasitamsel_channel',
+            'youtube_show' => '1',
+            'facebook' => 'https://facebook.com/literasitamsel_page',
+            'facebook_show' => '1',
+            'tiktok' => 'https://tiktok.com/@literasitamsel_official',
+            // tiktok_show is omitted / unchecked
         ]);
         $res->assertRedirect('/admin/settings');
 
@@ -441,6 +492,9 @@ class AdminViewsTest extends TestCase
         $home->assertSee('data-count-to="4"', false);
         $home->assertSee('+62 811-2233-4455');
         $home->assertSee('info@literasitamsel.org');
+        $home->assertSee('https://facebook.com/literasitamsel_page');
+        // TikTok was unchecked so it should not be displayed in footer
+        $home->assertDontSee('https://tiktok.com/@literasitamsel_official');
     }
 
     public function test_admin_views_do_not_contain_public_navigation_except_bottom_left_sidebar_link(): void
@@ -508,5 +562,145 @@ class AdminViewsTest extends TestCase
         $settingRes->assertStatus(200);
         $settingRes->assertDontSee('Lihat Beranda Publik');
         $settingRes->assertSee('Lihat website publik');
+    }
+
+    public function test_book_validation_requires_description_and_author_publisher_must_contain_letters(): void
+    {
+        // 1. Missing description should fail
+        $resNoDesc = $this->actingAs($this->admin)->post('/admin/library', [
+            'title' => 'Buku Uji Coba',
+            'author_name' => 'Penulis Valid',
+            'publisher_name' => 'Penerbit Valid',
+            'genre_name' => 'Fiksi',
+            'description' => '',
+        ]);
+        $resNoDesc->assertSessionHasErrors('description');
+
+        // 2. Purely numeric author name (e.g. "544") should fail
+        $resNumericAuthor = $this->actingAs($this->admin)->post('/admin/library', [
+            'title' => 'Buku Angka',
+            'author_name' => '544',
+            'publisher_name' => 'Penerbit Valid',
+            'genre_name' => 'Fiksi',
+            'description' => 'Sinopsis buku yang lengkap.',
+        ]);
+        $resNumericAuthor->assertSessionHasErrors('author_name');
+
+        // 3. Purely numeric publisher name (e.g. "12345") should fail
+        $resNumericPub = $this->actingAs($this->admin)->post('/admin/library', [
+            'title' => 'Buku Angka 2',
+            'author_name' => 'Penulis Valid',
+            'publisher_name' => '12345',
+            'genre_name' => 'Fiksi',
+            'description' => 'Sinopsis buku yang lengkap.',
+        ]);
+        $resNumericPub->assertSessionHasErrors('publisher_name');
+
+        // 4. Valid string with numbers (e.g. "Studio 47" or "Penerbit 21") should pass
+        $resValid = $this->actingAs($this->admin)->post('/admin/library', [
+            'title' => 'Buku Kreatif',
+            'author_name' => 'Penulis Studio 47',
+            'publisher_name' => 'Gramedia 21',
+            'genre_name' => 'Fiksi',
+            'description' => 'Sinopsis buku yang lengkap dan valid.',
+        ]);
+        $resValid->assertRedirect('/admin/library');
+        $this->assertDatabaseHas('books', ['title' => 'Buku Kreatif']);
+    }
+
+    public function test_dedicated_create_and_edit_pages_render_for_events_partners_and_users(): void
+    {
+        $superAdmin = User::factory()->create([
+            'role' => 'super-admin',
+            'status' => 'approved',
+        ]);
+
+        // Join Us Event Create & Edit
+        $eventCreateRes = $this->actingAs($this->admin)->get('/admin/join-us/events/create');
+        $eventCreateRes->assertStatus(200);
+        $eventCreateRes->assertSee('Tambah Event Sukarelawan');
+
+        // Store a new event to guarantee it exists for edit
+        $this->actingAs($this->admin)->post('/admin/join-us/events', [
+            'title' => 'Event Uji Coba Detail Page',
+            'category' => 'Volunteer Event',
+            'area' => 'Tambun Selatan',
+            'schedule' => '30 November 2026',
+            'deadline' => '25 November 2026',
+            'quota' => '20 Relawan',
+            'status' => 'Buka',
+            'description' => 'Deskripsi kegiatan relawan.',
+        ]);
+
+        $settings = (new JoinUsController)->getSettings();
+        $targetEventId = end($settings['events'])['id'];
+
+        $eventEditRes = $this->actingAs($this->admin)->get('/admin/join-us/events/'.$targetEventId.'/edit');
+        $eventEditRes->assertStatus(200);
+        $eventEditRes->assertSee('Edit Event Sukarelawan');
+
+        // Media Partner Create & Edit
+        $partnerCreateRes = $this->actingAs($this->admin)->get('/admin/media-partners/create');
+        $partnerCreateRes->assertStatus(200);
+        $partnerCreateRes->assertSee('Tambah Media Partner');
+
+        $partners = MediaPartnerController::getPartners();
+        $targetPartnerId = $partners[0]['id'] ?? 1;
+        $partnerEditRes = $this->actingAs($this->admin)->get('/admin/media-partners/'.$targetPartnerId.'/edit');
+        $partnerEditRes->assertStatus(200);
+        $partnerEditRes->assertSee('Edit Media Partner');
+
+        // Users Create & Edit (Super Admin only)
+        $userCreateRes = $this->actingAs($superAdmin)->get('/admin/users/create');
+        $userCreateRes->assertStatus(200);
+        $userCreateRes->assertSee('Tambah Admin Baru');
+        $userCreateRes->assertDontSee('Status Akun *');
+
+        $userEditRes = $this->actingAs($superAdmin)->get('/admin/users/'.$this->admin->id.'/edit');
+        $userEditRes->assertStatus(200);
+        $userEditRes->assertSee('Edit Akun Admin');
+        $userEditRes->assertDontSee('Status Akun *');
+    }
+
+    public function test_super_admin_and_sub_admin_privilege_access_control(): void
+    {
+        // 1. Sub-admin with restricted permissions
+        $subAdmin = User::factory()->create([
+            'role' => 'admin',
+            'status' => 'approved',
+            'privileges' => ['dashboard', 'publications'], // only 01 & 02
+        ]);
+
+        // Can access dashboard & publications
+        $this->actingAs($subAdmin)->get('/admin/dashboard')->assertStatus(200);
+        $this->actingAs($subAdmin)->get('/admin/publications')->assertStatus(200);
+
+        // Blocked from pages not permitted
+        $this->actingAs($subAdmin)->get('/admin/library')->assertStatus(403);
+        $this->actingAs($subAdmin)->get('/admin/join-us')->assertStatus(403);
+        $this->actingAs($subAdmin)->get('/admin/media-partners')->assertStatus(403);
+        $this->actingAs($subAdmin)->get('/admin/settings')->assertStatus(403);
+        $this->actingAs($subAdmin)->get('/admin/users')->assertStatus(403);
+
+        // Sidebar for subAdmin does not show Kelola Admin & Izin
+        $sidebarRes = $this->actingAs($subAdmin)->get('/admin/dashboard');
+        $sidebarRes->assertDontSee('Kelola Admin & Izin');
+
+        // 2. Super admin has full access to all pages
+        $superAdmin = User::factory()->create([
+            'role' => 'super-admin',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($superAdmin)->get('/admin/dashboard')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/publications')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/library')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/join-us')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/media-partners')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/settings')->assertStatus(200);
+        $this->actingAs($superAdmin)->get('/admin/users')->assertStatus(200);
+
+        $superSidebarRes = $this->actingAs($superAdmin)->get('/admin/dashboard');
+        $superSidebarRes->assertSee('Kelola Admin & Izin');
     }
 }

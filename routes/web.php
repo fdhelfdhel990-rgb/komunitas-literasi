@@ -9,6 +9,7 @@ use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use App\Models\Publication;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Route public page
@@ -44,6 +45,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/admin/dashboard', function () {
+        if (! Auth::user()->hasPrivilege('dashboard')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses Dashboard.');
+        }
+
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
@@ -62,12 +67,16 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/library/{book}', [BookController::class, 'destroy'])->name('admin.library.destroy');
 
     Route::get('/admin/join-us', [JoinUsController::class, 'indexAdmin'])->name('admin.join-us.index');
+    Route::get('/admin/join-us/events/create', [JoinUsController::class, 'createEvent'])->name('admin.join-us.events.create');
+    Route::get('/admin/join-us/events/{id}/edit', [JoinUsController::class, 'editEvent'])->name('admin.join-us.events.edit');
     Route::post('/admin/join-us', [JoinUsController::class, 'updateAdmin'])->name('admin.join-us.update');
     Route::post('/admin/join-us/events', [JoinUsController::class, 'storeEvent'])->name('admin.join-us.events.store');
     Route::put('/admin/join-us/events/{id}', [JoinUsController::class, 'updateEvent'])->name('admin.join-us.events.update');
     Route::delete('/admin/join-us/events/{id}', [JoinUsController::class, 'destroyEvent'])->name('admin.join-us.events.destroy');
 
     Route::get('/admin/media-partners', [MediaPartnerController::class, 'indexAdmin'])->name('admin.media-partners.index');
+    Route::get('/admin/media-partners/create', [MediaPartnerController::class, 'createAdmin'])->name('admin.media-partners.create');
+    Route::get('/admin/media-partners/{id}/edit', [MediaPartnerController::class, 'editAdmin'])->name('admin.media-partners.edit');
     Route::post('/admin/media-partners', [MediaPartnerController::class, 'storeAdmin'])->name('admin.media-partners.store');
     Route::put('/admin/media-partners/{id}', [MediaPartnerController::class, 'updateAdmin'])->name('admin.media-partners.update');
     Route::delete('/admin/media-partners/{id}', [MediaPartnerController::class, 'destroyAdmin'])->name('admin.media-partners.destroy');
@@ -76,9 +85,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
 
     Route::get('/admin/users', [UserController::class, 'indexAdmin'])->name('admin.users.index');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::get('/admin/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
     Route::put('/admin/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::patch('/admin/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+    Route::match(['post', 'patch'], '/admin/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
     Route::delete('/admin/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
 
     // Route super admin

@@ -14,10 +14,22 @@ use Illuminate\View\View;
 class UserController extends Controller
 {
     /**
+     * Check if authenticated user is Super Admin.
+     */
+    protected function checkSuperAdmin(): void
+    {
+        if (! Auth::check() || ! Auth::user()->isSuperAdmin()) {
+            abort(403, 'Akses ditolak. Fitur ini hanya dapat diakses oleh Super Admin.');
+        }
+    }
+
+    /**
      * Display users management in admin panel.
      */
     public function indexAdmin(): View
     {
+        $this->checkSuperAdmin();
+
         $users = User::latest()->get();
         $totalUsers = $users->count();
         $approvedUsers = $users->where('status', 'approved')->count();
@@ -27,17 +39,29 @@ class UserController extends Controller
     }
 
     /**
+     * Show the dedicated form for creating a new admin.
+     */
+    public function create(): View
+    {
+        $this->checkSuperAdmin();
+
+        return view('admin.users.create');
+    }
+
+    /**
      * Store a new administrator account.
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->checkSuperAdmin();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['nullable', 'string', 'max:50', 'unique:users,username'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:6'],
-            'role' => ['required', 'in:admin,super-admin'],
-            'status' => ['required', 'in:approved,pending'],
+            'privileges' => ['required', 'array', 'min:1', 'max:6'],
+            'privileges.*' => ['required', 'string', 'distinct', 'in:dashboard,publications,library,join-us,media-partners,settings'],
         ]);
 
         User::create([
@@ -45,12 +69,25 @@ class UserController extends Controller
             'username' => $validated['username'] ?: null,
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'status' => $validated['status'],
+            'role' => 'admin',
+            'status' => 'approved',
+            'privileges' => $validated['privileges'],
         ]);
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Akun admin berhasil ditambahkan.');
+            ->with('success', 'Akun admin "'.$validated['name'].'" berhasil ditambahkan.');
+    }
+
+    /**
+     * Show the dedicated form for editing an administrator account.
+     */
+    public function edit(int|string $id): View
+    {
+        $this->checkSuperAdmin();
+
+        $user = User::findOrFail($id);
+
+        return view('admin.users.edit', compact('user'));
     }
 
     /**
@@ -58,6 +95,8 @@ class UserController extends Controller
      */
     public function update(Request $request, int|string $id): RedirectResponse
     {
+        $this->checkSuperAdmin();
+
         $user = User::findOrFail($id);
 
         $validated = $request->validate([
@@ -65,23 +104,20 @@ class UserController extends Controller
             'username' => ['nullable', 'string', 'max:50', 'unique:users,username,'.$user->id],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'string', 'min:6'],
-            'role' => ['required', 'in:admin,super-admin'],
-            'status' => ['required', 'in:approved,pending'],
+            'status' => $user->isSuperAdmin() ? ['nullable', 'in:approved'] : ['required', 'in:approved,pending'],
+            'privileges' => $user->isSuperAdmin() ? ['nullable', 'array'] : ['required', 'array', 'min:1', 'max:6'],
+            'privileges.*' => ['required', 'string', 'distinct', 'in:dashboard,publications,library,join-us,media-partners,settings'],
         ]);
 
-        // Prevent self-demotion or self-suspension
-        if (Auth::id() === $user->id) {
-            if ($validated['status'] === 'pending') {
-                return back()->with('error', 'Anda tidak dapat mengubah status akun Anda sendiri menjadi Pending.');
-            }
-        }
+        $isSuperAdmin = $user->isSuperAdmin();
 
         $userData = [
             'name' => $validated['name'],
             'username' => $validated['username'] ?: null,
             'email' => $validated['email'],
-            'role' => $validated['role'],
-            'status' => $validated['status'],
+            'role' => $isSuperAdmin ? $user->role : 'admin',
+            'status' => $isSuperAdmin ? $user->status : $validated['status'],
+            'privileges' => $isSuperAdmin ? $user->privileges : $validated['privileges'],
         ];
 
         if (! empty($validated['password'])) {
@@ -99,19 +135,21 @@ class UserController extends Controller
      */
     public function toggleStatus(int|string $id): RedirectResponse
     {
+        $this->checkSuperAdmin();
+
         $user = User::findOrFail($id);
 
-        if (Auth::id() === $user->id && $user->status === 'approved') {
-            return back()->with('error', 'Anda tidak dapat mengubah status akun Anda sendiri menjadi Pending.');
+        if (Auth::id() === $user->id) {
+            return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
         }
 
         $newStatus = $user->status === 'approved' ? 'pending' : 'approved';
         $user->update(['status' => $newStatus]);
 
-        $statusLabel = $newStatus === 'approved' ? 'Disetujui (Approved)' : 'Menunggu Persetujuan (Pending)';
+        $statusLabel = $newStatus === 'approved' ? 'Aktif' : 'Nonaktif';
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Status akun "'.$user->name.'" berhasil diubah menjadi '.$statusLabel.'.');
+            ->with('success', 'Status peran "'.$user->name.'" berhasil diubah menjadi '.$statusLabel.'.');
     }
 
     /**
@@ -119,6 +157,8 @@ class UserController extends Controller
      */
     public function destroy(int|string $id): RedirectResponse
     {
+        $this->checkSuperAdmin();
+
         $user = User::findOrFail($id);
 
         if (Auth::id() === $user->id) {

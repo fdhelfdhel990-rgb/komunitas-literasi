@@ -8,7 +8,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        .login-password-field {
+            position: relative;
+            width: 100%;
+        }
+
+        .login-password-field input {
+            padding-right: 2.75rem;
+        }
+
+        .login-password-field button {
+            position: absolute;
+            top: 50%;
+            right: 0.75rem;
+            transform: translateY(-50%);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            padding: 0;
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .login-password-field button:hover {
+            color: #0A2373;
+        }
+    </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-800 font-['Poppins',sans-serif] min-h-screen flex items-center justify-center p-4 sm:p-6 py-8 sm:py-12 antialiased">
 
@@ -60,14 +90,25 @@
                 <label for="password" class="block text-xs sm:text-sm font-medium text-slate-800 mb-1.5">
                     Password
                 </label>
-                <input 
-                    type="password" 
-                    name="password" 
-                    id="password" 
-                    required 
-                    autocomplete="current-password" 
-                    class="w-full px-3.5 py-2.5 sm:py-2.5 rounded-lg border @error('password') border-rose-400 focus:ring-rose-200 @else border-slate-300 focus:border-[#0A2373] focus:ring-[#0A2373]/20 @enderror bg-white text-slate-800 outline-none focus:ring-2 transition duration-150 text-base sm:text-sm"
-                >
+                <div class="login-password-field">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="password" 
+                        required 
+                        autocomplete="current-password" 
+                        class="w-full px-3.5 py-2.5 sm:py-2.5 rounded-lg border @error('password') border-rose-400 focus:ring-rose-200 @else border-slate-300 focus:border-[#0A2373] focus:ring-[#0A2373]/20 @enderror bg-white text-slate-800 outline-none focus:ring-2 transition duration-150 text-base sm:text-sm"
+                    >
+                    <button
+                        type="button"
+                        id="toggle-password-visibility"
+                        aria-label="Tampilkan password"
+                        title="Tampilkan password"
+                        class="focus:outline-none"
+                    >
+                        <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Ingat Saya -->
@@ -95,5 +136,18 @@
         </form>
     </div>
 
+    <script>
+        document.getElementById('toggle-password-visibility').addEventListener('click', function () {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = this.querySelector('i');
+            const isPasswordHidden = passwordInput.type === 'password';
+
+            passwordInput.type = isPasswordHidden ? 'text' : 'password';
+            this.setAttribute('aria-label', isPasswordHidden ? 'Sembunyikan password' : 'Tampilkan password');
+            this.setAttribute('title', isPasswordHidden ? 'Sembunyikan password' : 'Tampilkan password');
+            eyeIcon.classList.toggle('fa-eye', ! isPasswordHidden);
+            eyeIcon.classList.toggle('fa-eye-slash', isPasswordHidden);
+        });
+    </script>
 </body>
 </html>

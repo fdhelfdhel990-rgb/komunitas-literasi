@@ -74,9 +74,6 @@
     <div class="container">
         <h2>Media Partner</h2>
         <div class="partner-carousel" data-partner-carousel role="region" aria-roledescription="carousel" aria-label="Logo media partner">
-            <button class="carousel-nav-btn carousel-arrow" type="button" aria-label="Mitra sebelumnya" data-partner-direction="previous">
-                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-            </button>
             <div class="partner-viewport" data-partner-viewport>
                 <div class="partner-track" data-partner-track>
                     <div class="partner-set" data-partner-set>
@@ -88,9 +85,6 @@
                     </div>
                 </div>
             </div>
-            <button class="carousel-nav-btn carousel-arrow" type="button" aria-label="Mitra berikutnya" data-partner-direction="next">
-                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-            </button>
         </div>
     </div>
 </section>

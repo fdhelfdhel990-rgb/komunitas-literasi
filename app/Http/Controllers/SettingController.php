@@ -4,11 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
 
 class SettingController extends Controller
 {
+    /**
+     * Check if authenticated user has privilege for Settings page.
+     */
+    protected function checkPrivilege(): void
+    {
+        if (Auth::check() && ! Auth::user()->hasPrivilege('settings')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Pengaturan & Identitas Konten.');
+        }
+    }
+
     /**
      * Storage path for community settings.
      */
@@ -39,7 +50,13 @@ class SettingController extends Controller
                 'whatsapp' => '+62 812-3456-7890',
                 'email' => 'kontak@literasitamsel.org',
                 'instagram' => 'https://instagram.com/literasitamsel',
+                'instagram_show' => true,
                 'youtube' => 'https://youtube.com/@literasitamsel',
+                'youtube_show' => true,
+                'facebook' => 'https://facebook.com/literasitamsel',
+                'facebook_show' => true,
+                'tiktok' => 'https://tiktok.com/@literasitamsel',
+                'tiktok_show' => true,
             ],
         ];
 
@@ -61,6 +78,8 @@ class SettingController extends Controller
      */
     public function indexAdmin(): View
     {
+        $this->checkPrivilege();
+
         $settings = self::getSettings();
 
         return view('admin.settings.index', compact('settings'));
@@ -71,6 +90,8 @@ class SettingController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        $this->checkPrivilege();
+
         $validated = $request->validate([
             'impact_kids' => ['required', 'string', 'max:50'],
             'book_collection' => ['required', 'string', 'max:50'],
@@ -81,6 +102,8 @@ class SettingController extends Controller
             'email' => ['nullable', 'email', 'max:100'],
             'instagram' => ['nullable', 'string', 'max:255'],
             'youtube' => ['nullable', 'string', 'max:255'],
+            'facebook' => ['nullable', 'string', 'max:255'],
+            'tiktok' => ['nullable', 'string', 'max:255'],
         ]);
 
         preg_match('/\d+/', $validated['impact_kids'], $m1);
@@ -104,7 +127,13 @@ class SettingController extends Controller
                 'whatsapp' => $validated['whatsapp'] ?? '',
                 'email' => $validated['email'] ?? '',
                 'instagram' => $validated['instagram'] ?? '',
+                'instagram_show' => $request->boolean('instagram_show'),
                 'youtube' => $validated['youtube'] ?? '',
+                'youtube_show' => $request->boolean('youtube_show'),
+                'facebook' => $validated['facebook'] ?? '',
+                'facebook_show' => $request->boolean('facebook_show'),
+                'tiktok' => $validated['tiktok'] ?? '',
+                'tiktok_show' => $request->boolean('tiktok_show'),
             ],
         ];
 

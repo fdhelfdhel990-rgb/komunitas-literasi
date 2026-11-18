@@ -37,7 +37,7 @@
                             <span class="publication-category">{{ $article->category }}</span>
                             <span class="card-date">{{ \Carbon\Carbon::parse($article->published_at)->translatedFormat('d F Y') }}</span>
                             <h2>{{ $article->title }}</h2>
-                            <p>{{ $article->excerpt }}</p>
+                            <p>{{ \Illuminate\Support\Str::limit(strip_tags(str_replace('</p>', ' ', $article->content)), 150) }}</p>
                         </div>
                     </a>
                 @endforeach

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'username', 'email', 'password', 'role', 'status'])]
+#[Fillable(['name', 'username', 'email', 'password', 'role', 'status', 'privileges'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -31,7 +31,28 @@ class User extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
-        return in_array($this->role, ['super-admin', 'super_admin']);
+        return in_array($this->role, ['super-admin', 'super_admin', 'Super Admin']);
+    }
+
+    /**
+     * Check if user has privilege for a specific page.
+     */
+    public function hasPrivilege(string $page): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if (is_null($this->privileges)) {
+            return true;
+        }
+
+        $privileges = $this->privileges;
+        if (! is_array($privileges)) {
+            $privileges = json_decode($privileges, true) ?? [];
+        }
+
+        return in_array($page, $privileges);
     }
 
     /**

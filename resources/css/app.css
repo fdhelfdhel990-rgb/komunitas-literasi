@@ -311,12 +311,19 @@
 
 .partner-section { padding: clamp(48px, 5vw, 64px) 0; }
 .partner-carousel {
-    display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    align-items: center;
-    gap: 16px;
+    display: block;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
 }
-.partner-viewport { min-width: 0; overflow: hidden; padding: 4px 0; }
+.partner-viewport {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    padding: 16px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
 .partner-track {
     display: flex;
     width: max-content;
@@ -329,8 +336,8 @@
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 20px;
-    padding-right: 20px;
+    gap: 48px;
+    padding-right: 48px;
 }
 @keyframes partner-marquee {
     to { transform: translateX(var(--partner-distance, 0px)); }
@@ -341,12 +348,12 @@
     border: none !important;
     box-shadow: none !important;
     border-radius: 0;
-    height: 110px;
-    flex: 0 0 clamp(200px, 22vw, 260px);
+    height: 125px;
+    flex: 0 0 clamp(220px, 22vw, 300px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 16px;
+    padding: 8px 20px;
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .partner-card:hover,
@@ -354,12 +361,12 @@
     border: none !important;
     box-shadow: none !important;
     transform: scale(1.08);
-    opacity: 0.9;
+    opacity: 0.95;
 }
 .partner-card img,
 .partner-logo img {
-    max-height: 90px;
-    max-width: 230px;
+    max-height: 95px;
+    max-width: 250px;
     width: auto;
     object-fit: contain;
     display: block;
@@ -936,7 +943,18 @@
         bottom: 7px;
         height: 2px;
     }
-    .hero-home { min-height: max(490px, calc(100svh - 64px)); }
+    .hero-home {
+        min-height: max(460px, calc(100svh - 64px));
+    }
+    .hero-home .hero-image {
+        object-fit: cover;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+    }
+    .hero-home .hero-content {
+        padding: 40px 16px 48px;
+    }
     .hero-about { min-height: 490px; }
     .hero h1 { font-size: 32px; }
     .hero-home h1 { max-width: 700px; font-size: clamp(32px, 8vw, 46px); letter-spacing: -.8px; }
@@ -947,13 +965,13 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .stat-card { padding: 18px 14px; }
     .stat-number { font-size: 26px; }
-    .partner-carousel { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 10px; }
-    .carousel-nav-btn { width: 36px; height: 36px; font-size: 12px; }
-    .partner-set { gap: 12px; padding-right: 12px; }
+    .partner-carousel { display: block; width: 100%; }
+    .partner-viewport { padding: 10px 0; }
+    .partner-set { gap: 24px; padding-right: 24px; }
     .partner-card,
-    .partner-logo { background: transparent !important; border: none !important; box-shadow: none !important; height: 84px; flex-basis: clamp(160px, 36vw, 200px); padding: 4px 12px; }
+    .partner-logo { background: transparent !important; border: none !important; box-shadow: none !important; height: 90px; flex-basis: clamp(150px, 38vw, 210px); padding: 6px 12px; }
     .partner-card img,
-    .partner-logo img { max-height: 68px; max-width: 180px; }
+    .partner-logo img { max-height: 70px; max-width: 170px; }
     .card-grid.three, .card-grid.two { grid-template-columns: 1fr; }
     .card-grid.four { grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .publication-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

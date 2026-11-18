@@ -204,25 +204,5 @@ if (partnerCarousel) {
         resizeObserver.observe(viewport);
         reducedMotion.addEventListener('change', prepareCarousel);
         prepareCarousel();
-
-        partnerCarousel.querySelectorAll('[data-partner-direction]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const direction = button.dataset.partnerDirection;
-                const animation = track.getAnimations()[0];
-
-                if (animation) {
-                    animation.pause();
-                    animation.currentTime = direction === 'next' ? 0 : animation.effect.getTiming().duration;
-                    animation.playbackRate = 1;
-                    animation.play();
-                    return;
-                }
-
-                viewport.scrollBy({
-                    left: direction === 'next' ? viewport.clientWidth : -viewport.clientWidth,
-                    behavior: reducedMotion.matches ? 'auto' : 'smooth',
-                });
-            });
-        });
     }
 }

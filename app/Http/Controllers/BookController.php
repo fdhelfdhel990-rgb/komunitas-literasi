@@ -7,8 +7,8 @@ use App\Models\Book;
 use App\Models\Genre;
 use App\Models\Publisher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -62,12 +62,23 @@ class BookController extends Controller
         ));
     }
 
+    /**
+     * Check if user has permission to manage Digital Library.
+     */
+    protected function checkPrivilege(): void
+    {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('library')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Digital Library.');
+        }
+    }
 
     /**
      * Display a listing of the resource for the admin panel.
      */
     public function indexAdmin(Request $request)
     {
+        $this->checkPrivilege();
+
         $query = Book::with(['author', 'publisher', 'genre'])->latest();
 
         if ($request->filled('q')) {
@@ -107,9 +118,9 @@ class BookController extends Controller
      */
     public function create()
     {
-        $authors    = Author::orderBy('name')->pluck('name');
+        $authors = Author::orderBy('name')->pluck('name');
         $publishers = Publisher::orderBy('name')->pluck('name');
-        $genres     = Genre::orderBy('name')->pluck('name');
+        $genres = Genre::orderBy('name')->pluck('name');
 
         return view('admin.library.create', compact('authors', 'publishers', 'genres'));
     }
@@ -119,6 +130,8 @@ class BookController extends Controller
      */
     public function createAdmin()
     {
+        $this->checkPrivilege();
+
         $genres = Genre::pluck('name')->toArray();
         $publishers = Publisher::pluck('name')->toArray();
         $authors = Author::pluck('name')->toArray();
@@ -131,48 +144,54 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkPrivilege();
+
         $validated = $request->validate([
-            'title'          => ['required', 'string', 'max:255'],
-            'author_name'    => ['required', 'string', 'max:255'],
-            'publisher_name' => ['required', 'string', 'max:255'],
-            'genre_name'     => ['required', 'string', 'max:255'],
-            'isbn'           => ['nullable', 'string', 'max:50', 'unique:books,isbn'],
-            'description'    => ['nullable', 'string'],
-            'cover_image'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'title' => ['required', 'string', 'max:255'],
+            'author_name' => ['required', 'string', 'max:255', 'regex:/[\p{L}a-zA-Z]/u'],
+            'publisher_name' => ['required', 'string', 'max:255', 'regex:/[\p{L}a-zA-Z]/u'],
+            'genre_name' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:50', 'unique:books,isbn'],
+            'description' => ['required', 'string'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+        ], [
+            'author_name.regex' => 'Nama penulis harus mengandung huruf (tidak boleh hanya berupa angka).',
+            'publisher_name.regex' => 'Nama penerbit harus mengandung huruf (tidak boleh hanya berupa angka).',
+            'description.required' => 'Sinopsis atau deskripsi ringkasan buku wajib diisi.',
         ]);
 
-        $author    = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
+        $author = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
         $publisher = Publisher::firstOrCreate(['name' => trim($validated['publisher_name'])]);
-        $genre     = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
+        $genre = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
 
         $coverPath = null;
         if ($request->hasFile('cover_image')) {
-            $file      = $request->file('cover_image');
+            $file = $request->file('cover_image');
             $directory = public_path('assets/images/books');
 
-            if (!file_exists($directory)) {
+            if (! file_exists($directory)) {
                 mkdir($directory, 0755, true);
             }
 
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
             $file->move($directory, $filename);
             $coverPath = $filename;
         }
 
         Book::create([
-            'title'        => $validated['title'],
-            'slug'         => $this->generateUniqueSlug($validated['title']),
-            'author_id'    => $author->id,
+            'title' => $validated['title'],
+            'slug' => $this->generateUniqueSlug($validated['title']),
+            'author_id' => $author->id,
             'publisher_id' => $publisher->id,
-            'genre_id'     => $genre->id,
-            'isbn'         => $validated['isbn'] ?? null,
-            'description'  => $validated['description'] ?? null,
-            'cover_path'   => $coverPath,
+            'genre_id' => $genre->id,
+            'isbn' => $validated['isbn'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'cover_path' => $coverPath,
             'is_published' => true,
-            'created_by'   => Auth::id(),
+            'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('admin.library.index')->with('success', 'Buku berhasil ditambahkan.');
+        return redirect()->route('admin.library.index')->with('success', 'Buku "'.$validated['title'].'" berhasil ditambahkan.');
     }
 
     /**
@@ -190,6 +209,8 @@ class BookController extends Controller
      */
     public function editAdmin(string $id)
     {
+        $this->checkPrivilege();
+
         $book = Book::with(['author', 'publisher', 'genre'])->findOrFail($id);
         $genres = Genre::pluck('name')->toArray();
         $publishers = Publisher::pluck('name')->toArray();
@@ -205,9 +226,9 @@ class BookController extends Controller
     {
         $book->load(['author', 'publisher', 'genre']);
 
-        $authors    = Author::orderBy('name')->pluck('name');
+        $authors = Author::orderBy('name')->pluck('name');
         $publishers = Publisher::orderBy('name')->pluck('name');
-        $genres     = Genre::orderBy('name')->pluck('name');
+        $genres = Genre::orderBy('name')->pluck('name');
 
         return view('admin.library.edit', compact('book', 'authors', 'publishers', 'genres'));
     }
@@ -217,42 +238,48 @@ class BookController extends Controller
      */
     public function update(Request $request, Book $book)
     {
+        $this->checkPrivilege();
+
         $validated = $request->validate([
-            'title'          => ['required', 'string', 'max:255'],
-            'author_name'    => ['required', 'string', 'max:255'],
-            'publisher_name' => ['required', 'string', 'max:255'],
-            'genre_name'     => ['required', 'string', 'max:255'],
-            'isbn'           => ['nullable', 'string', 'max:50', 'unique:books,isbn,' . $book->id],
-            'description'    => ['nullable', 'string'],
-            'cover_image'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-            'remove_cover'   => ['nullable', 'in:0,1'],
+            'title' => ['required', 'string', 'max:255'],
+            'author_name' => ['required', 'string', 'max:255', 'regex:/[\p{L}a-zA-Z]/u'],
+            'publisher_name' => ['required', 'string', 'max:255', 'regex:/[\p{L}a-zA-Z]/u'],
+            'genre_name' => ['required', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:50', 'unique:books,isbn,'.$book->id],
+            'description' => ['required', 'string'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'remove_cover' => ['nullable', 'in:0,1'],
+        ], [
+            'author_name.regex' => 'Nama penulis harus mengandung huruf (tidak boleh hanya berupa angka).',
+            'publisher_name.regex' => 'Nama penerbit harus mengandung huruf (tidak boleh hanya berupa angka).',
+            'description.required' => 'Sinopsis atau deskripsi ringkasan buku wajib diisi.',
         ]);
 
-        $author    = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
+        $author = Author::firstOrCreate(['name' => trim($validated['author_name'])]);
         $publisher = Publisher::firstOrCreate(['name' => trim($validated['publisher_name'])]);
-        $genre     = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
+        $genre = Genre::firstOrCreate(['name' => trim($validated['genre_name'])]);
 
         $directory = public_path('assets/images/books');
         $coverPath = $book->cover_path;
 
-        if ($request->input('remove_cover') === '1' && !$request->hasFile('cover_image')) {
-            if ($book->cover_path && file_exists($directory . '/' . $book->cover_path)) {
-                @unlink($directory . '/' . $book->cover_path);
+        if ($request->input('remove_cover') === '1' && ! $request->hasFile('cover_image')) {
+            if ($book->cover_path && file_exists($directory.'/'.$book->cover_path)) {
+                @unlink($directory.'/'.$book->cover_path);
             }
             $coverPath = null;
         }
 
         if ($request->hasFile('cover_image')) {
-            if (!file_exists($directory)) {
+            if (! file_exists($directory)) {
                 mkdir($directory, 0755, true);
             }
 
-            if ($book->cover_path && file_exists($directory . '/' . $book->cover_path)) {
-                @unlink($directory . '/' . $book->cover_path);
+            if ($book->cover_path && file_exists($directory.'/'.$book->cover_path)) {
+                @unlink($directory.'/'.$book->cover_path);
             }
 
-            $file     = $request->file('cover_image');
-            $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $file = $request->file('cover_image');
+            $filename = time().'_'.Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)).'.'.$file->getClientOriginalExtension();
             $file->move($directory, $filename);
             $coverPath = $filename;
         }
@@ -262,14 +289,14 @@ class BookController extends Controller
             : $book->slug;
 
         $book->update([
-            'title'        => $validated['title'],
-            'slug'         => $slug,
-            'author_id'    => $author->id,
+            'title' => $validated['title'],
+            'slug' => $slug,
+            'author_id' => $author->id,
             'publisher_id' => $publisher->id,
-            'genre_id'     => $genre->id,
-            'isbn'         => $validated['isbn'] ?? null,
-            'description'  => $validated['description'] ?? null,
-            'cover_path'   => $coverPath,
+            'genre_id' => $genre->id,
+            'isbn' => $validated['isbn'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'cover_path' => $coverPath,
         ]);
 
         return redirect()->route('admin.library.index')->with('success', 'Data buku berhasil diperbarui.');
@@ -280,27 +307,30 @@ class BookController extends Controller
      */
     public function destroy(Book $book)
     {
-        if ($book->cover_path && file_exists(public_path('assets/images/books/' . $book->cover_path))) {
-            @unlink(public_path('assets/images/books/' . $book->cover_path));
+        $this->checkPrivilege();
+
+        if ($book->cover_path && file_exists(public_path('assets/images/books/'.$book->cover_path))) {
+            @unlink(public_path('assets/images/books/'.$book->cover_path));
         }
 
+        $title = $book->title;
         $book->delete();
 
-        return redirect()->route('admin.library.index')->with('success', 'Buku berhasil dihapus.');
+        return redirect()->route('admin.library.index')->with('success', 'Buku "'.$title.'" berhasil dihapus dari katalog!');
     }
 
     private function generateUniqueSlug(string $title, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($title);
-        $slug     = $baseSlug;
-        $counter  = 2;
+        $slug = $baseSlug;
+        $counter = 2;
 
         while (
             Book::where('slug', $slug)
                 ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

@@ -68,10 +68,15 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Publikasi <span class="text-rose-500">*</span></label>
                     <select name="category" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition cursor-pointer">
+                        <option value="" disabled @selected(old('category') === null)>Pilih kategori</option>
                         @foreach ($categories as $cat)
                             <option value="{{ $cat }}" @selected(old('category') === $cat)>{{ $cat }}</option>
                         @endforeach
                     </select>
+                    <div class="mt-2 flex gap-2">
+                        <input type="text" id="new-category" maxlength="100" placeholder="Nama kategori baru" class="hidden flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#0A2373]">
+                        <button type="button" id="add-category-button" onclick="addPublicationCategory()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-[#0A2373] hover:bg-slate-50">Tambah kategori</button>
+                    </div>
                 </div>
 
                 <div>
@@ -214,6 +219,30 @@
 @endsection
 
 @push('scripts')
+<script>
+    function addPublicationCategory() {
+        const input = document.getElementById('new-category');
+        const select = document.querySelector('select[name="category"]');
+        if (input.classList.contains('hidden')) {
+            input.classList.remove('hidden');
+            input.focus();
+            return;
+        }
+        const category = input.value.trim();
+        if (!category) {
+            input.focus();
+            return;
+        }
+        let option = Array.from(select.options).find(item => item.value.toLowerCase() === category.toLowerCase());
+        if (!option) {
+            option = new Option(category, category);
+            select.add(option);
+        }
+        select.value = option.value;
+        input.value = '';
+        input.classList.add('hidden');
+    }
+</script>
 <style>
     #wysiwyg-editor blockquote {
         border-left: 3px solid #0A2373;

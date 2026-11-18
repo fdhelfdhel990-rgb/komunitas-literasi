@@ -46,9 +46,8 @@
             <div>
                 <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                     <div>
-                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Angka Capaian Beranda (Homepage Stats)</h3>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Data Capaian</h3>
                     </div>
-                    <span class="text-xs font-['Poppins'] font-bold text-slate-400">Section 2</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -88,7 +87,6 @@
                     <div>
                         <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Kontak &amp; Identitas Komunitas</h3>
                     </div>
-                    <span class="text-xs font-['Poppins'] font-bold text-slate-400">Footer Area</span>
                 </div>
 
                 <div class="space-y-4">
@@ -108,14 +106,69 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tautan Instagram (@)</label>
-                            <input type="text" name="instagram" value="{{ old('instagram', $settings['contact']['instagram'] ?? 'https://instagram.com/literasitamsel') }}" placeholder="https://instagram.com/literasitamsel" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tautan YouTube</label>
-                            <input type="text" name="youtube" value="{{ old('youtube', $settings['contact']['youtube'] ?? 'https://youtube.com/@literasitamsel') }}" placeholder="https://youtube.com/@literasitamsel" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                    <!-- Tautan Media Sosial & Opsi Tampilan Footer -->
+                    <div class="pt-2">
+                        <label class="block text-xs font-semibold uppercase  text-slate-700 mb-3">Tautan Media Sosial </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Instagram -->
+                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                        <i class="fa-brands fa-instagram text-rose-600 text-sm"></i>
+                                        <span>Tautan Instagram (@)</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
+                                        <input type="checkbox" name="instagram_show" value="1" @checked(old('instagram_show', $settings['contact']['instagram_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                        <span>Tampilkan di footer</span>
+                                    </label>
+                                </div>
+                                <input type="text" name="instagram" value="{{ old('instagram', $settings['contact']['instagram'] ?? 'https://instagram.com/literasitamsel') }}" placeholder="https://instagram.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            </div>
+
+                            <!-- YouTube -->
+                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                        <i class="fa-brands fa-youtube text-red-600 text-sm"></i>
+                                        <span>Tautan YouTube</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
+                                        <input type="checkbox" name="youtube_show" value="1" @checked(old('youtube_show', $settings['contact']['youtube_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                        <span>Tampilkan di footer</span>
+                                    </label>
+                                </div>
+                                <input type="text" name="youtube" value="{{ old('youtube', $settings['contact']['youtube'] ?? 'https://youtube.com/@literasitamsel') }}" placeholder="https://youtube.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            </div>
+
+                            <!-- Facebook -->
+                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i>
+                                        <span>Tautan Facebook</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
+                                        <input type="checkbox" name="facebook_show" value="1" @checked(old('facebook_show', $settings['contact']['facebook_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                        <span>Tampilkan di footer</span>
+                                    </label>
+                                </div>
+                                <input type="text" name="facebook" value="{{ old('facebook', $settings['contact']['facebook'] ?? 'https://facebook.com/literasitamsel') }}" placeholder="https://facebook.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            </div>
+
+                            <!-- TikTok -->
+                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                        <i class="fa-brands fa-tiktok text-slate-900 text-sm"></i>
+                                        <span>Tautan TikTok</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
+                                        <input type="checkbox" name="tiktok_show" value="1" @checked(old('tiktok_show', $settings['contact']['tiktok_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                        <span>Tampilkan di footer</span>
+                                    </label>
+                                </div>
+                                <input type="text" name="tiktok" value="{{ old('tiktok', $settings['contact']['tiktok'] ?? 'https://tiktok.com/@literasitamsel') }}" placeholder="https://tiktok.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            </div>
                         </div>
                     </div>
                 </div>

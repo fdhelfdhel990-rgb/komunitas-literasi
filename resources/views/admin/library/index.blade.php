@@ -77,16 +77,64 @@
                     @endforeach
                 </select>
 
-                <select 
-                    name="publisher" 
-                    onchange="this.form.submit()" 
-                    class="px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 bg-white focus:outline-none focus:border-[#0A2373] transition cursor-pointer"
-                >
-                    <option value="">Semua Penerbit</option>
-                    @foreach ($publishers as $pubName)
-                        <option value="{{ $pubName }}" @selected(request('publisher') === $pubName)>{{ $pubName }}</option>
-                    @endforeach
-                </select>
+                <!-- Dropdown Penerbit Searchable -->
+                <div class="relative" id="publisher-dropdown-container">
+                    <input type="hidden" name="publisher" id="filter-publisher-input" value="{{ request('publisher') }}">
+                    <button 
+                        type="button" 
+                        id="publisher-dropdown-btn"
+                        onclick="togglePublisherDropdown()" 
+                        class="inline-flex items-center justify-between gap-2.5 px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:border-[#0A2373] transition cursor-pointer min-w-[140px]"
+                    >
+                        <span id="publisher-selected-label" class="truncate max-w-[120px]">{{ request('publisher') ?: 'Semua Penerbit' }}</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    </button>
+
+                    <div 
+                        id="publisher-dropdown-panel" 
+                        class="hidden absolute right-0 sm:left-0 top-full mt-1.5 w-60 bg-white rounded-xl border border-slate-200 shadow-xl z-40 p-2 space-y-1.5"
+                    >
+                        <!-- Search Box inside Dropdown -->
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="publisher-search-input" 
+                                placeholder="Cari penerbit..." 
+                                oninput="filterPublisherOptions(this.value)"
+                                class="w-full pl-7 pr-2.5 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0A2373] bg-slate-50/50"
+                            >
+                        </div>
+
+                        <!-- Options List -->
+                        <div id="publisher-options-list" class="max-h-48 overflow-y-auto space-y-0.5 text-xs text-slate-700">
+                            <div 
+                                onclick="selectPublisher('')" 
+                                class="publisher-option px-2.5 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer flex items-center justify-between {{ !request('publisher') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : '' }}"
+                                data-name="semua penerbit"
+                            >
+                                <span>Semua Penerbit</span>
+                                @if(!request('publisher'))
+                                    <i class="fa-solid fa-check text-[10px] text-[#0A2373]"></i>
+                                @endif
+                            </div>
+                            @foreach ($publishers as $pubName)
+                                <div 
+                                    onclick="selectPublisher('{{ addslashes($pubName) }}')" 
+                                    class="publisher-option px-2.5 py-1.5 rounded-lg hover:bg-slate-100 cursor-pointer flex items-center justify-between {{ request('publisher') === $pubName ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : '' }}"
+                                    data-name="{{ strtolower($pubName) }}"
+                                >
+                                    <span class="truncate">{{ $pubName }}</span>
+                                    @if(request('publisher') === $pubName)
+                                        <i class="fa-solid fa-check text-[10px] text-[#0A2373]"></i>
+                                    @endif
+                                </div>
+                            @endforeach
+                            <div id="publisher-no-results" class="hidden text-center py-2 text-slate-400 text-[11px]">
+                                Penerbit tidak ditemukan
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 @if(request('q') || request('genre') || request('publisher'))
                     <a href="{{ route('admin.library.index') }}" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-rose-600 hover:bg-rose-50 transition flex items-center gap-1.5" title="Reset filter">
@@ -267,184 +315,62 @@
         @method('DELETE')
     </form>
 
-    <!-- Modal Form: Tambah Buku Baru (Tanpa Kolom Ketersediaan) -->
-    <div id="create-book-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs hidden opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-200">
-            <!-- Modal Header -->
-            <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Tambah Koleksi Buku</h3>
-                </div>
-                <button type="button" onclick="closeModal('create-book-modal')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
-
-            <!-- Modal Body Form (Real Backend POST) -->
-            <form action="{{ route('admin.library.store') }}" method="POST" enctype="multipart/form-data" class="p-5 sm:p-6 space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Judul Buku <span class="text-rose-500">*</span></label>
-                    <input type="text" name="title" required placeholder="Contoh: Negeri 5 Menara" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Penulis <span class="text-rose-500">*</span></label>
-                        <input type="text" name="author_name" required placeholder="Contoh: Ahmad Fuadi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Penerbit <span class="text-rose-500">*</span></label>
-                        <input type="text" name="publisher_name" required placeholder="Contoh: Gramedia" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Genre Buku <span class="text-rose-500">*</span></label>
-                    <input type="text" name="genre_name" list="create-genre-list" required placeholder="Pilih atau ketik genre (Contoh: Novel, Memoar, dsb)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    <datalist id="create-genre-list">
-                        @foreach ($genres as $genreName)
-                            <option value="{{ $genreName }}"></option>
-                        @endforeach
-                        <option value="Novel"></option>
-                        <option value="Memoar"></option>
-                        <option value="Pengembangan Diri"></option>
-                    </datalist>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Unggah Sampul Buku (Opsional)</label>
-                    <input type="file" name="cover_image" accept="image/png, image/jpeg, image/jpg, image/webp" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF8] file:text-[#0A2373] hover:file:bg-[#d6e2f5] cursor-pointer">
-                    <p class="text-[11px] text-slate-400 mt-1">Format: JPG, PNG, WebP (maks. 3MB). Jika kosong, akan memakai sampul default.</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sinopsis / Deskripsi Buku</label>
-                    <textarea name="description" rows="4" placeholder="Tuliskan gambaran isi buku dan pesan utama..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition"></textarea>
-                </div>
-
-                <!-- Form Action Buttons -->
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeModal('create-book-modal')" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition cursor-pointer">
-                        Simpan Buku
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Form: Edit Buku (Tanpa Kolom Ketersediaan) -->
-    <div id="edit-book-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs hidden opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto transform scale-95 transition-transform duration-200">
-            <!-- Modal Header -->
-            <div class="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900">Edit Informasi Buku</h3>
-                </div>
-                <button type="button" onclick="closeModal('edit-book-modal')" class="p-2 -mr-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
-                    <i class="fa-solid fa-xmark text-base"></i>
-                </button>
-            </div>
-
-            <!-- Modal Body Form (Real Backend PUT) -->
-            <form id="edit-book-form" method="POST" enctype="multipart/form-data" class="p-5 sm:p-6 space-y-4">
-                @csrf
-                @method('PUT')
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Judul Buku <span class="text-rose-500">*</span></label>
-                    <input id="edit-book-title" type="text" name="title" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Penulis <span class="text-rose-500">*</span></label>
-                        <input id="edit-book-author" type="text" name="author_name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Penerbit <span class="text-rose-500">*</span></label>
-                        <input id="edit-book-publisher" type="text" name="publisher_name" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Genre Buku <span class="text-rose-500">*</span></label>
-                    <input id="edit-book-genre" type="text" name="genre_name" list="edit-genre-list" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                    <datalist id="edit-genre-list">
-                        @foreach ($genres as $genreName)
-                            <option value="{{ $genreName }}"></option>
-                        @endforeach
-                        <option value="Novel"></option>
-                        <option value="Memoar"></option>
-                        <option value="Pengembangan Diri"></option>
-                    </datalist>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Ganti Sampul Buku (Opsional)</label>
-                    <input type="file" name="cover_image" accept="image/png, image/jpeg, image/jpg, image/webp" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#E8EEF8] file:text-[#0A2373] hover:file:bg-[#d6e2f5] cursor-pointer">
-                    <p class="text-[11px] text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah sampul saat ini.</p>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sinopsis / Deskripsi Buku</label>
-                    <textarea id="edit-book-desc" name="description" rows="4" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition"></textarea>
-                </div>
-
-                <!-- Form Action Buttons -->
-                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeModal('edit-book-modal')" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition cursor-pointer">
-                        Simpan Perubahan
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
 <script>
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            modal.firstElementChild?.classList.remove('scale-95');
-            modal.firstElementChild?.classList.add('scale-100');
-        }, 10);
+    function togglePublisherDropdown() {
+        const panel = document.getElementById('publisher-dropdown-panel');
+        const searchInput = document.getElementById('publisher-search-input');
+        if (!panel) return;
+        
+        if (panel.classList.contains('hidden')) {
+            panel.classList.remove('hidden');
+            setTimeout(() => {
+                if (searchInput) searchInput.focus();
+            }, 50);
+        } else {
+            panel.classList.add('hidden');
+        }
     }
 
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        modal.classList.add('opacity-0');
-        modal.firstElementChild?.classList.remove('scale-100');
-        modal.firstElementChild?.classList.add('scale-95');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 200);
+    function filterPublisherOptions(keyword) {
+        keyword = (keyword || '').toLowerCase().trim();
+        const options = document.querySelectorAll('.publisher-option');
+        let visibleCount = 0;
+        options.forEach(opt => {
+            const name = opt.getAttribute('data-name') || '';
+            if (!keyword || name.includes(keyword)) {
+                opt.style.display = 'flex';
+                visibleCount++;
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+        const noRes = document.getElementById('publisher-no-results');
+        if (noRes) {
+            noRes.classList.toggle('hidden', visibleCount > 0);
+        }
     }
 
-    function openEditBookModal(book) {
-        const form = document.getElementById('edit-book-form');
-        form.action = '{{ url('/admin/library') }}/' + book.id;
-
-        document.getElementById('edit-book-title').value = book.title || '';
-        document.getElementById('edit-book-author').value = book.author || '';
-        document.getElementById('edit-book-publisher').value = book.publisher || '';
-        document.getElementById('edit-book-genre').value = book.genre || '';
-        document.getElementById('edit-book-desc').value = book.description || '';
-        openModal('edit-book-modal');
+    function selectPublisher(name) {
+        const input = document.getElementById('filter-publisher-input');
+        if (input) {
+            input.value = name;
+            const panel = document.getElementById('publisher-dropdown-panel');
+            if (panel) panel.classList.add('hidden');
+            input.closest('form').submit();
+        }
     }
+
+    // Close dropdown on outside click
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('publisher-dropdown-container');
+        const panel = document.getElementById('publisher-dropdown-panel');
+        if (container && panel && !container.contains(e.target)) {
+            panel.classList.add('hidden');
+        }
+    });
 
     function confirmDeleteBook(id, title) {
         if (confirm(`Apakah Anda yakin ingin menghapus buku "${title}" dari katalog? Data akan dihapus secara permanen.`)) {
@@ -453,6 +379,5 @@
             form.submit();
         }
     }
-    
 </script>
 @endpush

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Book;
 use App\Models\Author;
-use App\Models\Publisher; 
+use App\Models\Book;
 use App\Models\Genre;
+use App\Models\Publisher;
+use Illuminate\Http\Request;
 
 class BookController extends Controller
 {
@@ -16,9 +16,9 @@ class BookController extends Controller
      */
     public function index()
     {
-        $kumpulan_buku = Book::all(); 
+        $kumpulan_buku = Book::all();
 
-        return view('katalog', compact('kumpulan_buku')); 
+        return view('katalog', compact('kumpulan_buku'));
     }
 
     public function create()
@@ -34,10 +34,7 @@ class BookController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        
-    }
+    public function store(Request $request) {}
 
     /**
      * Display the specified resource.

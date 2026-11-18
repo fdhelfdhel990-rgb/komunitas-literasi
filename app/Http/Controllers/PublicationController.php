@@ -5,10 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\Publication;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class PublicationController extends Controller
 {
+    /**
+     * Check if authenticated user has privilege for Publications page.
+     */
+    protected function checkPrivilege(): void
+    {
+        if (Auth::check() && ! Auth::user()->hasPrivilege('publications')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Publikasi.');
+        }
+    }
+
     /**
      * Display a listing of the resource for public view.
      */
@@ -63,6 +74,8 @@ class PublicationController extends Controller
      */
     public function indexAdmin(Request $request)
     {
+        $this->checkPrivilege();
+
         $query = Publication::with('user');
 
         if ($request->filled('q')) {
@@ -92,10 +105,8 @@ class PublicationController extends Controller
 
         $articles = $query->latest('published_at')->paginate(6)->withQueryString();
 
-        $categories = Publication::pluck('category')->filter()->unique()->values()->toArray();
-        if (empty($categories)) {
-            $categories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi'];
-        }
+        $defaultCategories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi', 'Partnership'];
+        $categories = array_values(array_unique(array_merge($defaultCategories, Publication::pluck('category')->filter()->unique()->values()->toArray())));
 
         return view('admin.publications.index', compact('articles', 'categories'));
     }
@@ -105,10 +116,10 @@ class PublicationController extends Controller
      */
     public function createAdmin()
     {
-        $categories = Publication::pluck('category')->filter()->unique()->values()->toArray();
-        if (empty($categories)) {
-            $categories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi'];
-        }
+        $this->checkPrivilege();
+
+        $defaultCategories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi', 'Partnership'];
+        $categories = array_values(array_unique(array_merge($defaultCategories, Publication::pluck('category')->filter()->unique()->values()->toArray())));
 
         return view('admin.publications.create', compact('categories'));
     }
@@ -118,11 +129,11 @@ class PublicationController extends Controller
      */
     public function editAdmin($id)
     {
+        $this->checkPrivilege();
+
         $article = Publication::with('user')->findOrFail($id);
-        $categories = Publication::pluck('category')->filter()->unique()->values()->toArray();
-        if (empty($categories)) {
-            $categories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi'];
-        }
+        $defaultCategories = ['Kajian', 'Pendidikan', 'Sosial', 'Berita Komunitas', 'Opini & Literasi', 'Partnership'];
+        $categories = array_values(array_unique(array_merge($defaultCategories, Publication::pluck('category')->filter()->unique()->values()->toArray())));
 
         return view('admin.publications.edit', compact('article', 'categories'));
     }
@@ -132,6 +143,8 @@ class PublicationController extends Controller
      */
     public function store(Request $request)
     {
+        $this->checkPrivilege();
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:100'],
@@ -181,6 +194,8 @@ class PublicationController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->checkPrivilege();
+
         $publication = Publication::findOrFail($id);
 
         $validated = $request->validate([
@@ -239,6 +254,8 @@ class PublicationController extends Controller
      */
     public function destroy($id)
     {
+        $this->checkPrivilege();
+
         $publication = Publication::findOrFail($id);
         $title = $publication->title;
 

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Publication;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -115,12 +117,41 @@ class MediaPartnerController extends Controller
     /**
      * Display the public partnership page.
      */
-    public function indexPublic()
+    public function indexPublic(Request $request)
     {
-        $partners = self::getPartners();
-        $profiles = self::getProfiles();
+        $allPartners = self::getPartners();
+        $perPage = 8;
+        $page = (int) $request->input('partner_page', $request->input('page', 1));
+        if ($page < 1) {
+            $page = 1;
+        }
+        $offset = ($page - 1) * $perPage;
+        $currentPartners = array_slice($allPartners, $offset, $perPage);
 
-        return view('partnership', compact('partners', 'profiles'));
+        $partners = new LengthAwarePaginator(
+            $currentPartners,
+            count($allPartners),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => 'partner_page',
+                'query' => $request->query(),
+            ]
+        );
+
+        $partnershipArticles = Publication::where('status', 'published')
+            ->where(function ($q) {
+                $q->where('category', 'Partnership')
+                    ->orWhere('category', 'partnership')
+                    ->orWhere('category', 'Kemitraan')
+                    ->orWhere('category', 'kemitraan');
+            })
+            ->latest('published_at')
+            ->paginate(6, ['*'], 'article_page')
+            ->withQueryString();
+
+        return view('partnership', compact('partners', 'partnershipArticles'));
     }
 
     /**
@@ -137,13 +168,58 @@ class MediaPartnerController extends Controller
     }
 
     /**
+     * Check if user has permission to manage Media Partners.
+     */
+    protected function checkPrivilege(): void
+    {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('media-partners')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Media Partner.');
+        }
+    }
+
+    /**
      * Display media partners in admin panel.
      */
     public function indexAdmin()
     {
+        $this->checkPrivilege();
+
         $partners = self::getPartners();
 
         return view('admin.media-partners.index', compact('partners'));
+    }
+
+    /**
+     * Show dedicated create page for media partner.
+     */
+    public function createAdmin()
+    {
+        $this->checkPrivilege();
+
+        return view('admin.media-partners.create');
+    }
+
+    /**
+     * Show dedicated edit page for media partner.
+     */
+    public function editAdmin($id)
+    {
+        $this->checkPrivilege();
+
+        $partners = self::getPartners();
+        $partner = null;
+        foreach ($partners as $p) {
+            if ($p['id'] == $id) {
+                $partner = $p;
+                break;
+            }
+        }
+
+        if (! $partner) {
+            abort(404, 'Media partner tidak ditemukan.');
+        }
+
+        return view('admin.media-partners.edit', compact('partner'));
     }
 
     /**
@@ -151,6 +227,8 @@ class MediaPartnerController extends Controller
      */
     public function storeAdmin(Request $request)
     {
+        $this->checkPrivilege();
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'logo_image' => ['required', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:3072'],
@@ -186,6 +264,8 @@ class MediaPartnerController extends Controller
      */
     public function updateAdmin(Request $request, $id)
     {
+        $this->checkPrivilege();
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'logo_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:3072'],
@@ -229,6 +309,8 @@ class MediaPartnerController extends Controller
      */
     public function destroyAdmin($id)
     {
+        $this->checkPrivilege();
+
         $partners = self::getPartners();
         $filtered = array_values(array_filter($partners, function ($p) use ($id) {
             return $p['id'] != $id;

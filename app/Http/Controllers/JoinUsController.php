@@ -129,16 +129,57 @@ class JoinUsController extends Controller
         return view('join-us.event-detail', compact('settings', 'event'));
     }
 
+    /**
+     * Check if user has permission to manage Join Us.
+     */
+    protected function checkPrivilege(): void
+    {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('join-us')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Join Us.');
+        }
+    }
+
     public function indexAdmin(Request $request)
     {
+        $this->checkPrivilege();
+
         $settings = $this->getSettings();
         $edit = $request->query('edit'); // 'volunteer', 'event', 'collaboration', or null
 
         return view('admin.join-us.index', compact('settings', 'edit'));
     }
 
+    public function createEvent()
+    {
+        $this->checkPrivilege();
+
+        return view('admin.join-us.events.create');
+    }
+
+    public function editEvent($id)
+    {
+        $this->checkPrivilege();
+
+        $settings = $this->getSettings();
+        $events = $settings['events'] ?? [];
+        $event = null;
+        foreach ($events as $e) {
+            if ($e['id'] == $id) {
+                $event = $e;
+                break;
+            }
+        }
+
+        if (! $event) {
+            abort(404, 'Event tidak ditemukan.');
+        }
+
+        return view('admin.join-us.events.edit', compact('event'));
+    }
+
     public function updateAdmin(Request $request)
     {
+        $this->checkPrivilege();
         $section = $request->input('section'); // 'volunteer' or 'collaboration'
         $settings = $this->getSettings();
 
@@ -177,6 +218,7 @@ class JoinUsController extends Controller
 
     public function storeEvent(Request $request)
     {
+        $this->checkPrivilege();
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'area' => ['required', 'string', 'max:255'],
@@ -228,6 +270,8 @@ class JoinUsController extends Controller
 
     public function updateEvent(Request $request, $id)
     {
+        $this->checkPrivilege();
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'area' => ['required', 'string', 'max:255'],
@@ -280,6 +324,7 @@ class JoinUsController extends Controller
 
     public function destroyEvent($id)
     {
+        $this->checkPrivilege();
         $settings = $this->getSettings();
         $events = $settings['events'] ?? [];
         $settings['events'] = array_values(array_filter($events, function ($e) use ($id) {

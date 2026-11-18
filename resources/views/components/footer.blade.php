@@ -19,10 +19,18 @@
             <p>{{ $contact['address'] ?? 'Tambun Selatan, Bekasi, Jawa Barat' }}</p>
             <p>Gerobak Angkasa: Perpustakaan Keliling</p>
             <div class="social-links" aria-label="Media sosial">
-                <a href="{{ !empty($contact['youtube']) ? $contact['youtube'] : '#' }}" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
-                <a href="{{ !empty($contact['instagram']) ? $contact['instagram'] : '#' }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
-                <a href="https://tiktok.com" target="_blank" rel="noopener" aria-label="TikTok"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></a>
-                <a href="https://facebook.com" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a>
+                @if (!empty($contact['youtube']) && ($contact['youtube_show'] ?? true))
+                    <a href="{{ $contact['youtube'] }}" target="_blank" rel="noopener" aria-label="YouTube"><i class="fa-brands fa-youtube" aria-hidden="true"></i></a>
+                @endif
+                @if (!empty($contact['instagram']) && ($contact['instagram_show'] ?? true))
+                    <a href="{{ $contact['instagram'] }}" target="_blank" rel="noopener" aria-label="Instagram"><i class="fa-brands fa-instagram" aria-hidden="true"></i></a>
+                @endif
+                @if (!empty($contact['tiktok']) && ($contact['tiktok_show'] ?? true))
+                    <a href="{{ $contact['tiktok'] }}" target="_blank" rel="noopener" aria-label="TikTok"><i class="fa-brands fa-tiktok" aria-hidden="true"></i></a>
+                @endif
+                @if (!empty($contact['facebook']) && ($contact['facebook_show'] ?? true))
+                    <a href="{{ $contact['facebook'] }}" target="_blank" rel="noopener" aria-label="Facebook"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a>
+                @endif
             </div>
         </div>
 

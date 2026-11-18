@@ -30,6 +30,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'role' => 'admin',
             'status' => 'approved',
+            'privileges' => ['dashboard', 'publications', 'library', 'join-us', 'media-partners', 'settings'],
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

@@ -10,6 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        main > .mb-6.p-4.rounded-xl.bg-emerald-50.border-emerald-200,
+        main > .mb-6.p-4.rounded-xl.bg-rose-50.border-rose-200 {
+            display: none !important;
+        }
+    </style>
 </head>
 <body class="bg-[#F8FAFC] text-slate-800 font-['Poppins',sans-serif] antialiased min-h-screen flex flex-col lg:flex-row overflow-x-hidden">
 
@@ -38,6 +44,7 @@
             </div>
 
             <!-- 01 UMUM -->
+            @if(auth()->user() && auth()->user()->hasPrivilege('dashboard'))
             <div class="mb-6">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
                     Umum
@@ -52,13 +59,25 @@
                     </a>
                 </nav>
             </div>
+            @endif
 
             <!-- MANAJEMEN KONTEN -->
+            @php
+                $hasContentAccess = auth()->user() && (
+                    auth()->user()->hasPrivilege('publications') ||
+                    auth()->user()->hasPrivilege('library') ||
+                    auth()->user()->hasPrivilege('join-us') ||
+                    auth()->user()->hasPrivilege('media-partners') ||
+                    auth()->user()->hasPrivilege('settings')
+                );
+            @endphp
+            @if($hasContentAccess)
             <div class="mb-6">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
                     Manajemen Konten
                 </span>
                 <nav class="space-y-1 text-sm font-medium">
+                    @if(auth()->user()->hasPrivilege('publications'))
                     <a 
                         href="{{ route('admin.publications.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.publications.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -66,6 +85,8 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.publications.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">02</span>
                         <span>Publication</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasPrivilege('library'))
                     <a 
                         href="{{ route('admin.library.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.library.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -73,6 +94,8 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.library.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">03</span>
                         <span>Digital Library</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasPrivilege('join-us'))
                     <a 
                         href="{{ route('admin.join-us.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.join-us.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -80,6 +103,8 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.join-us.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">04</span>
                         <span>Join Us</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasPrivilege('media-partners'))
                     <a 
                         href="{{ route('admin.media-partners.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.media-partners.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -87,17 +112,22 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.media-partners.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">05</span>
                         <span>Partnership</span>
                     </a>
+                    @endif
+                    @if(auth()->user()->hasPrivilege('settings'))
                     <a 
                         href="{{ route('admin.settings.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.settings.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
                     >
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.settings.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">06</span>
-                        <span>Identitas & Konten</span>
+                        <span>Identitas &amp; Konten</span>
                     </a>
+                    @endif
                 </nav>
             </div>
+            @endif
 
             <!-- PENGATURAN AKSES -->
+            @if(auth()->user() && auth()->user()->isSuperAdmin())
             <div>
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
                     Pengaturan Akses
@@ -108,10 +138,11 @@
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.users.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
                     >
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.users.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">07</span>
-                        <span>Kelola Admin & Izin</span>
+                        <span>Kelola Admin &amp; Izin</span>
                     </a>
                 </nav>
             </div>
+            @endif
         </div>
 
         <!-- Bottom Sidebar Link -->
@@ -171,9 +202,34 @@
         </main>
     </div>
 
+    @php
+        $toastMessage = $errors->first() ?: session('error') ?: session('success');
+        $toastIsError = $errors->any() || session()->has('error');
+    @endphp
+    @if ($toastMessage)
+        <div id="admin-toast" role="{{ $toastIsError ? 'alert' : 'status' }}" aria-live="polite" class="fixed left-4 right-4 top-20 z-[100] ml-auto flex w-auto max-w-sm items-center justify-between gap-4 rounded-lg border border-slate-200 border-l-4 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg transition-all duration-300 {{ $toastIsError ? 'border-l-rose-500' : 'border-l-emerald-500' }}">
+            <span>{{ $toastMessage }}</span>
+            <button type="button" onclick="dismissAdminToast()" aria-label="Tutup notifikasi" class="shrink-0 text-slate-400 transition hover:text-slate-700">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    @endif
+
     <!-- Mobile Drawer Interaction Script -->
     <script>
+        function dismissAdminToast() {
+            const toast = document.getElementById('admin-toast');
+            if (!toast) return;
+
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            if (document.getElementById('admin-toast')) {
+                setTimeout(dismissAdminToast, 4500);
+            }
+
             const sidebar = document.getElementById('sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
             const toggleBtn = document.getElementById('sidebar-toggle-btn');

@@ -79,10 +79,13 @@
                                 name="author_name" 
                                 list="authors-list"
                                 required 
+                                pattern=".*[a-zA-Z\u00C0-\u024F].*"
+                                title="Nama penulis harus mengandung huruf (tidak boleh hanya angka)"
                                 value="{{ old('author_name') }}" 
                                 placeholder="Contoh: Ahmad Fuadi"
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                             >
+                            <span class="text-[11px] text-slate-400 mt-1 block">Harus memuat huruf (kombinasi angka diperbolehkan).</span>
                             <datalist id="authors-list">
                                 @foreach ($authors as $a)
                                     <option value="{{ $a }}"></option>
@@ -97,10 +100,13 @@
                                 name="publisher_name" 
                                 list="publishers-list"
                                 required 
+                                pattern=".*[a-zA-Z\u00C0-\u024F].*"
+                                title="Nama penerbit harus mengandung huruf (tidak boleh hanya angka)"
                                 value="{{ old('publisher_name') }}" 
                                 placeholder="Contoh: Gramedia"
                                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                             >
+                            <span class="text-[11px] text-slate-400 mt-1 block">Harus memuat huruf (kombinasi angka diperbolehkan).</span>
                             <datalist id="publishers-list">
                                 @foreach ($publishers as $p)
                                     <option value="{{ $p }}"></option>
@@ -130,10 +136,11 @@
 
                     <!-- Sinopsis / Deskripsi Buku -->
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi Ringkasan / Sinopsis Buku</label>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi Ringkasan / Sinopsis Buku <span class="text-rose-500">*</span></label>
                         <textarea 
                             name="description" 
                             rows="9" 
+                            required
                             placeholder="Tuliskan sinopsis buku, pengantar alur cerita, atau ringkasan topik bacaan..." 
                             class="w-full p-3.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition resize-y leading-relaxed"
                         >{{ old('description') }}</textarea>
@@ -204,7 +211,7 @@
                     </div>
 
                     <div class="text-[11px] text-slate-400 leading-normal">
-                        Format yang didukung: JPG, PNG, WebP hingga 3MB. Disarankan rasio sampul 3:4 agar proporsional di katalog.
+                        Format yang didukung: JPG, PNG, WebP hingga 3MB. Disarankan rasio sampul 3:4.
                     </div>
                 </div>
 
