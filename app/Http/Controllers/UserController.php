@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendAdminInvitationJob;
 use App\Mail\InviteAdminMail;
 use App\Models\User;
+use App\Notifications\NewAdminNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +57,11 @@ class UserController extends Controller
     {
         $this->checkSuperAdmin();
 
+        // Hapus permanen data akun sampah (soft-deleted) jika email/username sama agar bisa digunakan kembali
+        User::onlyTrashed()->where('email', $request->email)
+            ->when($request->username, fn($q) => $q->orWhere('username', $request->username))
+            ->forceDelete();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['nullable', 'string', 'max:50', 'unique:users,username'],
@@ -64,7 +71,7 @@ class UserController extends Controller
             'privileges.*' => ['required', 'string', 'distinct', 'in:dashboard,publications,library,join-us,media-partners,settings'],
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'username' => $validated['username'] ?: null,
             'email' => $validated['email'],
@@ -74,8 +81,16 @@ class UserController extends Controller
             'privileges' => $validated['privileges'],
         ]);
 
+        // Kirim email kredensial akun menggunakan Queue Job (Modul Bagian 7)
+        dispatch(new SendAdminInvitationJob($user, $validated['password']));
+
+        // Kirim notifikasi ke Super Admin (Modul Bagian 4)
+        if (Auth::user()) {
+            Auth::user()->notify(new NewAdminNotification($user));
+        }
+
         return redirect()->route('admin.users.index')
-            ->with('success', 'Akun admin "'.$validated['name'].'" berhasil ditambahkan.');
+            ->with('success', 'Akun admin "'.$validated['name'].'" berhasil ditambahkan dan email undangan telah dikirim via antrean (Queue).');
     }
 
     /**
@@ -98,6 +113,11 @@ class UserController extends Controller
         $this->checkSuperAdmin();
 
         $user = User::findOrFail($id);
+
+        // Hapus permanen data akun sampah (soft-deleted) jika email/username sama agar bisa digunakan kembali
+        User::onlyTrashed()->where('email', $request->email)
+            ->when($request->username, fn($q) => $q->orWhere('username', $request->username))
+            ->forceDelete();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -249,12 +269,14 @@ class UserController extends Controller
             'privileges' => $request->privileges,
         ]);
 
-        Mail::to($newAdmin->email)->send(new InviteAdminMail(
-            $newAdmin->name,
-            $newAdmin->username,
-            $request->password
-        ));
+        // Kirim email kredensial akun menggunakan Queue Job (Modul Bagian 7)
+        dispatch(new SendAdminInvitationJob($newAdmin, $request->password));
 
-        return back()->with('success', 'Admin berhasil dibuat dan email kredensial telah dikirim!');
+        // Kirim notifikasi ke Super Admin (Modul Bagian 4)
+        if (Auth::user()) {
+            Auth::user()->notify(new NewAdminNotification($newAdmin));
+        }
+
+        return back()->with('success', 'Admin berhasil dibuat dan email kredensial telah dimasukkan ke antrean pengiriman (Queue)!');
     }
 }

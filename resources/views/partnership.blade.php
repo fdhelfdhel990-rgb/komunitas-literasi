@@ -42,23 +42,31 @@
                 @if (method_exists($partners, 'lastPage') && $partners->lastPage() > 1)
                     <nav class="flex items-center justify-center gap-2 mt-8 pt-6 border-t border-slate-100" aria-label="Navigasi halaman media partner">
                         @if ($partners->currentPage() > 1)
-                            <a href="{{ $partners->previousPageUrl() }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition" aria-label="Halaman sebelumnya">‹</a>
+                            <a href="{{ $partners->previousPageUrl() }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs" aria-label="Halaman sebelumnya">
+                                <i class="fa-solid fa-chevron-left text-sm"></i>
+                            </a>
                         @else
-                            <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-100 text-xs font-semibold text-slate-300 cursor-not-allowed">‹</span>
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-100 text-slate-300 cursor-not-allowed">
+                                <i class="fa-solid fa-chevron-left text-sm"></i>
+                            </span>
                         @endif
 
                         @for ($i = 1; $i <= $partners->lastPage(); $i++)
                             @if ($i === $partners->currentPage())
-                                <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg bg-[#0A2373] text-xs font-semibold text-white shadow-xs">{{ $i }}</span>
+                                <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#0A2373] text-sm font-bold text-white shadow-xs">{{ $i }}</span>
                             @else
-                                <a href="{{ $partners->url($i) }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition">{{ $i }}</a>
+                                <a href="{{ $partners->url($i) }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs">{{ $i }}</a>
                             @endif
                         @endfor
 
                         @if ($partners->hasMorePages())
-                            <a href="{{ $partners->nextPageUrl() }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition" aria-label="Halaman berikutnya">›</a>
+                            <a href="{{ $partners->nextPageUrl() }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs" aria-label="Halaman berikutnya">
+                                <i class="fa-solid fa-chevron-right text-sm"></i>
+                            </a>
                         @else
-                            <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-100 text-xs font-semibold text-slate-300 cursor-not-allowed">›</span>
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-100 text-slate-300 cursor-not-allowed">
+                                <i class="fa-solid fa-chevron-right text-sm"></i>
+                            </span>
                         @endif
                     </nav>
                 @endif
@@ -120,23 +128,31 @@
             @if (method_exists($partnershipArticles, 'lastPage') && $partnershipArticles->lastPage() > 1)
                 <nav class="flex items-center justify-center gap-2 mt-8 pt-6" aria-label="Navigasi halaman publikasi kemitraan">
                     @if ($partnershipArticles->currentPage() > 1)
-                        <a href="{{ $partnershipArticles->previousPageUrl() }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition" aria-label="Halaman sebelumnya">‹</a>
+                        <a href="{{ $partnershipArticles->previousPageUrl() }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs" aria-label="Halaman sebelumnya">
+                            <i class="fa-solid fa-chevron-left text-sm"></i>
+                        </a>
                     @else
-                        <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-100 text-xs font-semibold text-slate-300 cursor-not-allowed">‹</span>
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-100 text-slate-300 cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-left text-sm"></i>
+                        </span>
                     @endif
 
                     @for ($i = 1; $i <= $partnershipArticles->lastPage(); $i++)
                         @if ($i === $partnershipArticles->currentPage())
-                            <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg bg-[#0A2373] text-xs font-semibold text-white shadow-xs">{{ $i }}</span>
+                            <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#0A2373] text-sm font-bold text-white shadow-xs">{{ $i }}</span>
                         @else
-                            <a href="{{ $partnershipArticles->url($i) }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition">{{ $i }}</a>
+                            <a href="{{ $partnershipArticles->url($i) }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs">{{ $i }}</a>
                         @endif
                     @endfor
 
                     @if ($partnershipArticles->hasMorePages())
-                        <a href="{{ $partnershipArticles->nextPageUrl() }}" class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] transition" aria-label="Halaman berikutnya">›</a>
+                        <a href="{{ $partnershipArticles->nextPageUrl() }}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 text-slate-700 hover:border-[#0A2373] hover:text-[#0A2373] hover:bg-slate-50 transition shadow-2xs" aria-label="Halaman berikutnya">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </a>
                     @else
-                        <span class="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-lg border border-slate-100 text-xs font-semibold text-slate-300 cursor-not-allowed">›</span>
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-100 text-slate-300 cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </span>
                     @endif
                 </nav>
             @endif

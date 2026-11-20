@@ -148,7 +148,7 @@ class MediaPartnerController extends Controller
                     ->orWhere('category', 'kemitraan');
             })
             ->latest('published_at')
-            ->paginate(6, ['*'], 'article_page')
+            ->paginate(3, ['*'], 'article_page')
             ->withQueryString();
 
         return view('partnership', compact('partners', 'partnershipArticles'));

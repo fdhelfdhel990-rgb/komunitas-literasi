@@ -92,10 +92,11 @@
 
                     <div 
                         id="publisher-dropdown-panel" 
-                        class="hidden absolute right-0 sm:left-0 top-full mt-1.5 w-60 bg-white rounded-xl border border-slate-200 shadow-xl z-40 p-2 space-y-1.5"
+                        class="hidden absolute right-0 top-full mt-1.5 w-60 bg-white rounded-xl border border-slate-200 shadow-xl z-40 p-2 space-y-1.5 origin-top-right"
                     >
                         <!-- Search Box inside Dropdown -->
                         <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
                             <input 
                                 type="text" 
                                 id="publisher-search-input" 

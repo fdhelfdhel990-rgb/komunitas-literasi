@@ -43,12 +43,10 @@ if (menuButton && nav) {
 const partnerCarousel = document.querySelector('[data-partner-carousel]');
 
 const motionTargets = document.querySelectorAll(
-    'main > section:not(.hero), main > section > .container > h2, main > section > .container > .section-subtitle, main > section > .container > .stats-grid, main > section > .container > .card-grid, main > section > .container > .partner-carousel, main > section > .container > .publication-detail-grid, main > section > .container > .join-choice-grid, main > section > .container > .event-card, main > section > .container > .event-detail-card, main > section > .container > .publication-article, main > section > .container > .book-detail-card, .publication-grid > .publication-card, .book-catalog-grid > .book-catalog-card, .library-section .card-grid > .book-card, .publication-section .card-grid > .publication-card'
+    '.hero-content > h1, .hero-content > p, .hero-content > .hero-actions, main > section:not(.hero), main > section > .container > h2, main > section > .container > .section-subtitle, main > section > .container > .stats-grid, main > section > .container > .card-grid, main > section > .container > .partner-carousel, main > section > .container > .publication-detail-grid, main > section > .container > .join-choice-grid, main > section > .container > .event-card, main > section > .container > .event-detail-card, main > section > .container > .publication-article, main > section > .container > .book-detail-card, .publication-grid > .publication-card, .book-catalog-grid > .book-catalog-card, .library-section .card-grid > .book-card, .publication-section .card-grid > .publication-card, .stat-card'
 );
 
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-if (motionTargets.length > 0 && 'IntersectionObserver' in window && !prefersReducedMotion.matches) {
+if (motionTargets.length > 0 && 'IntersectionObserver' in window) {
     const motionObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -56,15 +54,21 @@ if (motionTargets.length > 0 && 'IntersectionObserver' in window && !prefersRedu
                 observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.05 });
 
     motionTargets.forEach((target) => {
         target.classList.add('scroll-motion');
 
-        if (target.matches('.publication-card, .book-card, .book-catalog-card')) {
+        if (target.matches('.hero-content > h1')) {
+            target.style.setProperty('--motion-delay', '0ms');
+        } else if (target.matches('.hero-content > p')) {
+            target.style.setProperty('--motion-delay', '120ms');
+        } else if (target.matches('.hero-content > .hero-actions')) {
+            target.style.setProperty('--motion-delay', '240ms');
+        } else if (target.matches('.publication-card, .book-card, .book-catalog-card, .stat-card')) {
             const siblings = Array.from(target.parentElement.children);
             const index = siblings.indexOf(target);
-            target.style.setProperty('--motion-delay', `${Math.min(index, 5) * 90}ms`);
+            target.style.setProperty('--motion-delay', `${Math.min(index, 5) * 80}ms`);
         }
 
         motionObserver.observe(target);
@@ -74,8 +78,6 @@ if (motionTargets.length > 0 && 'IntersectionObserver' in window && !prefersRedu
 const statisticCounters = document.querySelectorAll('[data-count-to]');
 
 if (statisticCounters.length > 0) {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
     const showFinalCount = (counter) => {
         counter.textContent = Number(counter.dataset.countTo).toLocaleString('id-ID');
     };
@@ -83,7 +85,7 @@ if (statisticCounters.length > 0) {
     const animateCount = (counter) => {
         const target = Number(counter.dataset.countTo);
 
-        if (reducedMotion.matches || !Number.isFinite(target) || target < 0) {
+        if (!Number.isFinite(target) || target < 0) {
             showFinalCount(counter);
             return;
         }
@@ -113,7 +115,7 @@ if (statisticCounters.length > 0) {
                 observer.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.5 });
+    }, { threshold: 0.15 });
 
     statisticCounters.forEach((counter) => counterObserver.observe(counter));
 }
@@ -165,17 +167,10 @@ if (partnerCarousel) {
     const viewport = partnerCarousel.querySelector('[data-partner-viewport]');
     const track = partnerCarousel.querySelector('[data-partner-track]');
     const partnerSet = partnerCarousel.querySelector('[data-partner-set]');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
     if (viewport && track && partnerSet) {
         const prepareCarousel = () => {
             track.querySelectorAll('[data-partner-clone]').forEach((clone) => clone.remove());
-            track.style.removeProperty('--partner-distance');
-            track.style.removeProperty('--partner-duration');
-
-            if (reducedMotion.matches) {
-                return;
-            }
 
             const partnerSetWidth = partnerSet.getBoundingClientRect().width;
 
@@ -183,7 +178,7 @@ if (partnerCarousel) {
                 return;
             }
 
-            while (track.scrollWidth < viewport.clientWidth + partnerSetWidth) {
+            while (track.scrollWidth < viewport.clientWidth * 2 + partnerSetWidth) {
                 const clone = partnerSet.cloneNode(true);
                 clone.removeAttribute('data-partner-set');
                 clone.setAttribute('data-partner-clone', '');
@@ -202,7 +197,15 @@ if (partnerCarousel) {
         });
 
         resizeObserver.observe(viewport);
-        reducedMotion.addEventListener('change', prepareCarousel);
+        window.addEventListener('load', prepareCarousel);
+        document.addEventListener('DOMContentLoaded', prepareCarousel);
+        
+        partnerCarousel.querySelectorAll('img').forEach((img) => {
+            if (!img.complete) {
+                img.addEventListener('load', prepareCarousel, { once: true });
+            }
+        });
+
         prepareCarousel();
     }
 }

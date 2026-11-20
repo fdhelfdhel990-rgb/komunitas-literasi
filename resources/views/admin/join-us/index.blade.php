@@ -41,90 +41,48 @@
             </h1>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            <!-- Card 1: Ikut Volunteer (Pencantuman Link Form) -->
-            <a href="{{ route('admin.join-us.index', ['edit' => 'volunteer']) }}" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs hover:shadow-md hover:border-[#0A2373] transition flex flex-col justify-between group">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-[#E8EEF8] text-[#0A2373] flex items-center justify-center mb-4 text-xl group-hover:scale-105 transition">
-                        <i class="fa-solid fa-people-group"></i>
-                    </div>
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                        <h2 class="text-base font-bold text-slate-900 group-hover:text-[#0A2373] transition">
-                            Ikut Volunteer
-                        </h2>
-                        <span class="text-xs font-medium {{ ($settings['volunteer']['status'] ?? 'Buka') === 'Buka' ? 'text-emerald-600' : 'text-slate-400' }}">
-                            {{ $settings['volunteer']['status'] ?? 'Buka' }}
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-500 mb-3 line-clamp-2">
-                        {{ $settings['volunteer']['description'] ?? 'Pencantuman link formulir pendaftaran relawan komunitas.' }}
-                    </div>
-                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-link text-[10px]"></i>
-                        <span class="truncate">{{ !empty($settings['volunteer']['form_link']) ? 'Link Form Terpasang' : 'Belum Ada Link' }}</span>
-                    </div>
-                </div>
-                <div class="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0A2373]">
-                    <span>Kelola Link Formulir</span>
-                    <i class="fa-solid fa-arrow-right text-[11px] group-hover:translate-x-1 transition"></i>
-                </div>
-            </a>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Card 1: Ikut Volunteer -->
+            <article class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-7 shadow-xs hover:shadow-md transition flex flex-col items-center text-center">
+                <i class="fa-solid fa-people-group text-3xl sm:text-4xl text-[#0A2373] mb-4" aria-hidden="true"></i>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-2 font-['Poppins']">
+                    Ikut Volunteer
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed flex-1">
+                    {{ $settings['volunteer']['description'] ?? 'Bergabung sebagai pendamping membaca dan penggerak kegiatan komunitas.' }}
+                </p>
+                <a href="{{ route('admin.join-us.index', ['edit' => 'volunteer']) }}" class="w-full py-2.5 px-4 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs">
+                    Kelola Formulir
+                </a>
+            </article>
 
-            <!-- Card 2: Volunteer Event (Bisa Bertambah: Tambah, Edit, Hapus) -->
-            <a href="{{ route('admin.join-us.index', ['edit' => 'event']) }}" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs hover:shadow-md hover:border-[#0A2373] transition flex flex-col justify-between group">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-[#E8EEF8] text-[#0A2373] flex items-center justify-center mb-4 text-xl group-hover:scale-105 transition">
-                        <i class="fa-regular fa-calendar-check"></i>
-                    </div>
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                        <h2 class="text-base font-bold text-slate-900 group-hover:text-[#0A2373] transition">
-                            Volunteer Event
-                        </h2>
-                        <span class="text-xs font-medium text-[#0A2373] font-['Poppins'] font-bold">
-                            {{ count($settings['events'] ?? []) }} Event
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-500 mb-3 line-clamp-2">
-                        Kelola agenda kegiatan sukarelawan (tambah, edit, dan hapus event berkala).
-                    </div>
-                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-layer-group text-[10px]"></i>
-                        <span>Daftar kegiatan sukarelawan aktif</span>
-                    </div>
-                </div>
-                <div class="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0A2373]">
-                    <span>Kelola Daftar Event</span>
-                    <i class="fa-solid fa-arrow-right text-[11px] group-hover:translate-x-1 transition"></i>
-                </div>
-            </a>
+            <!-- Card 2: Volunteer Event -->
+            <article class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-7 shadow-xs hover:shadow-md transition flex flex-col items-center text-center">
+                <i class="fa-regular fa-calendar-check text-3xl sm:text-4xl text-[#0A2373] mb-4" aria-hidden="true"></i>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-2 font-['Poppins']">
+                    Ikut Volunteer Event
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed flex-1">
+                    Terlibat pada agenda literasi tertentu sesuai waktu dan kemampuan Anda (tambah, edit, dan hapus event).
+                </p>
+                <a href="{{ route('admin.join-us.index', ['edit' => 'event']) }}" class="w-full py-2.5 px-4 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs">
+                    Kelola Daftar Event
+                </a>
+            </article>
 
-            <!-- Card 3: Ajukan Kerja Sama Kolaborasi (Pencantuman Link Form) -->
-            <a href="{{ route('admin.join-us.index', ['edit' => 'collaboration']) }}" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs hover:shadow-md hover:border-[#0A2373] transition flex flex-col justify-between group">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-[#E8EEF8] text-[#0A2373] flex items-center justify-center mb-4 text-xl group-hover:scale-105 transition">
-                        <i class="fa-solid fa-handshake"></i>
-                    </div>
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                        <h2 class="text-base font-bold text-slate-900 group-hover:text-[#0A2373] transition">
-                            Ajukan Kerja Sama Kolaborasi
-                        </h2>
-                        <span class="text-xs font-medium {{ ($settings['collaboration']['status'] ?? 'Buka') === 'Buka' ? 'text-emerald-600' : 'text-slate-400' }}">
-                            {{ $settings['collaboration']['status'] ?? 'Buka' }}
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-500 mb-3 line-clamp-2">
-                        {{ $settings['collaboration']['description'] ?? 'Tautan formulir kemitraan dan kolaborasi program.' }}
-                    </div>
-                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-link text-[10px]"></i>
-                        <span class="truncate">{{ !empty($settings['collaboration']['form_link']) ? 'Link Form Terpasang' : 'Belum Ada Link' }}</span>
-                    </div>
-                </div>
-                <div class="pt-5 mt-5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-[#0A2373]">
-                    <span>Kelola Link Formulir</span>
-                    <i class="fa-solid fa-arrow-right text-[11px] group-hover:translate-x-1 transition"></i>
-                </div>
-            </a>
+            <!-- Card 3: Ajukan Kerja Sama Kolaborasi -->
+            <article class="bg-white rounded-2xl border border-slate-200/90 p-6 sm:p-7 shadow-xs hover:shadow-md transition flex flex-col items-center text-center">
+                <i class="fa-solid fa-handshake text-3xl sm:text-4xl text-[#0A2373] mb-4" aria-hidden="true"></i>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 mb-2 font-['Poppins']">
+                    Ajukan Kerja Sama Kolaborasi
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed flex-1">
+                    {{ $settings['collaboration']['description'] ?? 'Buka peluang kemitraan program, publikasi, atau dukungan operasional.' }}
+                </p>
+                <a href="{{ route('admin.join-us.index', ['edit' => 'collaboration']) }}" class="w-full py-2.5 px-4 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs">
+                    Kelola Kerja Sama
+                </a>
+            </article>
         </div>
 
     @elseif ($edit === 'volunteer')
