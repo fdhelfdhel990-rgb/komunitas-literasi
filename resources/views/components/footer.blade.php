@@ -38,10 +38,10 @@
             <h3>Jelajahi</h3>
             <a href="{{ url('/') }}">Beranda Utama</a>
             <a href="{{ url('/about') }}">Tentang Kami</a>
-            <a href="{{ route('library.index') }}">Digital Library</a>
             <a href="{{ route('publications.index') }}">Publikasi &amp; Berita</a>
-            <a href="{{ route('partnership') }}">Partnership</a>
+            <a href="{{ route('library.index') }}">Digital Library</a>
             <a href="{{ route('join-us') }}">Join Us</a>
+            <a href="{{ route('partnership') }}">Partnership</a>
         </div>
 
         <div>

@@ -113,6 +113,22 @@ class PublicationSeeder extends Seeder
                 'summary' => 'Peresmian perluasan rute operasional perpustakaan keliling menjangkau pelosok desa.',
                 'content' => '<p>Melalui dukungan sarana operasional dari mitra perbankan dan komunitas lokal, Armada Gerobak Angkasa Bergerak kini dapat memperluas jangkauan pelayanannya hingga ke pemukiman warga terjauh.</p><p>Peresmian rute baru ini diharapkan mempermudah anak-anak desa meminjam buku secara cuma-cuma dan menikmati fasilitas membaca kapan saja.</p>',
             ],
+            [
+                'image' => 'publication-1.jpg',
+                'category' => 'Partnership',
+                'date' => '2026-07-25',
+                'title' => 'Penyediaan Fasilitas Pojok Baca Ramah Anak',
+                'summary' => 'Kolaborasi penyediaan rak dan buku edukatif untuk fasilitas belajar di posyandu binaan.',
+                'content' => '<p>Bersama mitra BUMN, Komunitas Literasi Remaja Tambun Selatan meresmikan pojok baca ramah anak di balai pertemuan desa. Fasilitas ini dilengkapi dengan karpet baca, meja bundar ramah anak, dan koleksi ensiklopedia sains bergambar.</p><p>Dukungan berkelanjutan dari para mitra membantu mewujudkan lingkungan membaca yang nyaman dan inklusif bagi seluruh lapisan masyarakat.</p>',
+            ],
+            [
+                'image' => 'publication-2.jpg',
+                'category' => 'Partnership',
+                'date' => '2026-07-18',
+                'title' => 'Pengabdian Mahasiswa KKN untuk Literasi Desa',
+                'summary' => 'Penerjunan relawan pengajar mahasiswa dalam program pendampingan membaca anak.',
+                'content' => '<p>Program kerja sama kemitraan perguruan tinggi membawa puluhan mahasiswa KKN terjun langsung mendampingi adik-adik di Tambun Selatan. Sinergi ini memperkuat program pengajaran literasi dasar dan numerasi menyenangkan.</p>',
+            ],
         ];
 
         foreach ($articles as $item) {
