@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             if (! Schema::hasColumn('users', 'role')) {
-                $table->string('role')->default('admin')->after('username');
+                $table->enum('role', ['admin', 'super-admin'])->default('admin')->after('username');
             }
             if (! Schema::hasColumn('users', 'status')) {
-                $table->string('status')->default('pending')->after('role');
+                $table->enum('status', ['aktif', 'tidak aktif'])->default('aktif')->after('role');
             }
         });
     }
@@ -24,7 +24,16 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['role', 'status']);
+            $columns = [];
+            if (Schema::hasColumn('users', 'role')) {
+                $columns[] = 'role';
+            }
+            if (Schema::hasColumn('users', 'status')) {
+                $columns[] = 'status';
+            }
+            if (! empty($columns)) {
+                $table->dropColumn($columns);
+            }
         });
     }
 };
