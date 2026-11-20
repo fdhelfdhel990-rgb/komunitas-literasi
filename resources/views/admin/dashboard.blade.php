@@ -33,7 +33,7 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs sm:shadow-sm hover:shadow-md transition">
             <span class="text-xs font-['Poppins'] font-bold text-slate-400 block mb-3">PB</span>
             <div class="text-xs text-slate-500 font-medium mb-1">Publication</div>
-            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">9</div>
+            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{{ \App\Models\Publication::count() }}</div>
             <a href="{{ route('admin.publications.index') }}" class="text-xs font-semibold text-[#0A2373] hover:underline flex items-center gap-1.5">
                 <span>Kelola publikasi</span>
                 <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -44,7 +44,7 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs sm:shadow-sm hover:shadow-md transition">
             <span class="text-xs font-['Poppins'] font-bold text-slate-400 block mb-3">MP</span>
             <div class="text-xs text-slate-500 font-medium mb-1">Media Partner aktif</div>
-            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">4</div>
+            <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">{{ \App\Models\MediaPartner::count() }}</div>
             <a href="{{ route('admin.media-partners.index') }}" class="text-xs font-semibold text-[#0A2373] hover:underline flex items-center gap-1.5">
                 <span>Kelola mitra</span>
                 <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -56,7 +56,7 @@
             <span class="text-xs font-['Poppins'] font-bold text-slate-400 block mb-3">AD</span>
             <div class="text-xs text-slate-500 font-medium mb-1">Akun admin aktif</div>
             <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-                {{ \App\Models\User::where('status', 'approved')->count() > 0 ? \App\Models\User::where('status', 'approved')->count() : 1 }}
+                {{ \App\Models\User::where('status', 'aktif')->count() > 0 ? \App\Models\User::where('status', 'approved')->count() : 1 }}
             </div>
             <a href="{{ route('admin.users.index') }}" class="text-xs font-semibold text-[#0A2373] hover:underline flex items-center gap-1.5">
                 <span>Kelola akses</span>
