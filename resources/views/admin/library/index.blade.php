@@ -4,6 +4,10 @@
 @section('page_title', 'Digital Library')
 
 @section('content')
+    @php
+        $canManageLibrary = Auth::user()->canManage('digital_library');
+    @endphp
+
     <!-- Flash Messages -->
     @if (session('success'))
         <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center justify-between shadow-xs">
@@ -37,16 +41,22 @@
             <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Katalog Digital Library
             </h1>
+            @unless ($canManageLibrary)
+                <p class="text-xs text-slate-500 mt-1">Mode lihat saja (Anda tidak memiliki izin untuk menambah, mengubah, atau menghapus data ini).</p>
+            @endunless
         </div>
-        <div class="flex items-center gap-2.5">
-            <a 
-                href="{{ route('admin.library.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs cursor-pointer"
-            >
-                <i class="fa-solid fa-plus text-xs"></i>
-                <span>Tambah Buku</span>
-            </a>
-        </div>
+
+        @if ($canManageLibrary)
+            <div class="flex items-center gap-2.5">
+                <a 
+                    href="{{ route('admin.library.create') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition shadow-xs cursor-pointer"
+                >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Tambah Buku</span>
+                </a>
+            </div>
+        @endif
     </div>
 
     <!-- Filter & Search Toolbar -->
@@ -147,7 +157,7 @@
         </form>
     </div>
 
-    <!-- Data Table Card (Kolom Ketersediaan sudah dihapus) -->
+    <!-- Data Table Card -->
     <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
             <div class="text-xs sm:text-sm font-semibold text-slate-800">
@@ -169,7 +179,9 @@
                         <th class="px-4 sm:px-6 py-3.5">Buku &amp; Penulis</th>
                         <th class="px-4 sm:px-6 py-3.5 w-44">Genre</th>
                         <th class="px-4 sm:px-6 py-3.5 w-40">Penerbit</th>
-                        <th class="px-4 sm:px-6 py-3.5 w-28 text-center">Aksi</th>
+                        @if ($canManageLibrary)
+                            <th class="px-4 sm:px-6 py-3.5 w-28 text-center">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -202,7 +214,7 @@
                                 </div>
                             </td>
 
-                            <!-- Genre (Teks biasa tanpa background warna biru) -->
+                            <!-- Genre -->
                             <td class="px-4 sm:px-6 py-4 text-xs font-medium text-slate-700 whitespace-nowrap">
                                 {{ $book->genre->name ?? '-' }}
                             </td>
@@ -214,30 +226,31 @@
                             </td>
 
                             <!-- Actions -->
-                            <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1">
-                                    <!-- Halaman detail khusus pengeditan -->
-                                    <a 
-                                        href="{{ route('admin.library.edit', $book->id) }}" 
-                                        class="p-2 rounded-lg text-slate-400 hover:text-[#0A2373] hover:bg-slate-100 transition" 
-                                        title="Edit buku (Halaman Detail)"
-                                    >
-                                        <i class="fa-regular fa-pen-to-square text-xs"></i>
-                                    </a>
-                                    <button 
-                                        type="button" 
-                                        onclick="confirmDeleteBook({{ $book->id }}, '{{ addslashes($book->title) }}')" 
-                                        class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" 
-                                        title="Hapus buku"
-                                    >
-                                        <i class="fa-regular fa-trash-can text-xs"></i>
-                                    </button>
-                                </div>
-                            </td>
+                            @if ($canManageLibrary)
+                                <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
+                                    <div class="inline-flex items-center gap-1">
+                                        <a 
+                                            href="{{ route('admin.library.edit', $book->id) }}" 
+                                            class="p-2 rounded-lg text-slate-400 hover:text-[#0A2373] hover:bg-slate-100 transition" 
+                                            title="Edit buku (Halaman Detail)"
+                                        >
+                                            <i class="fa-regular fa-pen-to-square text-xs"></i>
+                                        </a>
+                                        <button 
+                                            type="button" 
+                                            onclick="confirmDeleteBook({{ $book->id }}, '{{ addslashes($book->title) }}')" 
+                                            class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" 
+                                            title="Hapus buku"
+                                        >
+                                            <i class="fa-regular fa-trash-can text-xs"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-400 text-xs sm:text-sm">
+                            <td colspan="{{ $canManageLibrary ? 5 : 4 }}" class="px-6 py-12 text-center text-slate-400 text-xs sm:text-sm">
                                 <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
                                     <i class="fa-solid fa-book-open text-lg"></i>
                                 </div>
@@ -256,7 +269,6 @@
                     Menampilkan {{ $books->firstItem() ?? 0 }} sampai {{ $books->lastItem() ?? 0 }} dari {{ $books->total() }} entri
                 </div>
                 <div class="flex items-center gap-1 self-end sm:self-auto">
-                    <!-- Tombol Prev -->
                     @if ($books->onFirstPage())
                         <span class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-300 cursor-not-allowed">
                             &lt;
@@ -271,7 +283,6 @@
                         </a>
                     @endif
 
-                    <!-- Nomor Halaman -->
                     @for ($p = 1; $p <= $books->lastPage(); $p++)
                         @if ($p == $books->currentPage())
                             <span class="px-3 py-1.5 rounded-lg bg-[#0A2373] text-white font-['Poppins'] font-bold text-xs">
@@ -287,7 +298,6 @@
                         @endif
                     @endfor
 
-                    <!-- Tombol Next -->
                     @if ($books->hasMorePages())
                         <a 
                             href="{{ $books->nextPageUrl() }}" 
@@ -311,10 +321,12 @@
     </div>
 
     <!-- Hidden Delete Form -->
-    <form id="delete-book-form" method="POST" class="hidden">
-        @csrf
-        @method('DELETE')
-    </form>
+    @if ($canManageLibrary)
+        <form id="delete-book-form" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endif
 
 @endsection
 
@@ -364,7 +376,6 @@
         }
     }
 
-    // Close dropdown on outside click
     document.addEventListener('click', function(e) {
         const container = document.getElementById('publisher-dropdown-container');
         const panel = document.getElementById('publisher-dropdown-panel');
@@ -376,6 +387,7 @@
     function confirmDeleteBook(id, title) {
         if (confirm(`Apakah Anda yakin ingin menghapus buku "${title}" dari katalog? Data akan dihapus secara permanen.`)) {
             const form = document.getElementById('delete-book-form');
+            if (!form) return;
             form.action = '{{ url('/admin/library') }}/' + id;
             form.submit();
         }

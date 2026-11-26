@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendAdminInvitationJob;
-use App\Mail\InviteAdminMail;
 use App\Models\User;
-use App\Notifications\NewAdminNotification;
+use App\Mail\InviteAdminMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     /**
-     * Check if authenticated user is Super Admin.
+     * Pastikan hanya Super Admin yang dapat mengakses kelola admin.
      */
     protected function checkSuperAdmin(): void
     {
@@ -26,22 +26,39 @@ class UserController extends Controller
     }
 
     /**
-     * Display users management in admin panel.
+     * Ubah array checkbox dari form menjadi JSON boolean baku.
+     */
+    protected function formatPrivileges(array $selectedModules): array
+    {
+        $formatted = [];
+        foreach (User::MODULES as $module) {
+            $formatted[$module] = in_array($module, $selectedModules, true);
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Menampilkan daftar seluruh admin (aktif maupun tidak aktif / soft-deleted).
      */
     public function indexAdmin(): View
     {
         $this->checkSuperAdmin();
 
-        $users = User::latest()->get();
-        $totalUsers = $users->count();
-        $approvedUsers = $users->where('status', 'approved')->count();
-        $pendingUsers = $users->where('status', 'pending')->count();
+        $users = User::withTrashed()
+            ->orderByRaw('id = ? DESC', [Auth::id()])
+            ->orderBy('name', 'asc')
+            ->get();
 
-        return view('admin.users.index', compact('users', 'totalUsers', 'approvedUsers', 'pendingUsers'));
+        $totalUsers = $users->count();
+        $activeUsers = $users->where('status', 'aktif')->whereNull('deleted_at')->count();
+        $inactiveUsers = $users->filter(fn ($u) => $u->status === 'tidak aktif' || $u->trashed())->count();
+
+        return view('admin.users.index', compact('users', 'totalUsers', 'activeUsers', 'inactiveUsers'));
     }
 
     /**
-     * Show the dedicated form for creating a new admin.
+     * Menampilkan form tambah / undang admin baru.
      */
     public function create(): View
     {
@@ -51,232 +68,209 @@ class UserController extends Controller
     }
 
     /**
-     * Store a new administrator account.
+     * Menyimpan admin baru dan mengirim kredensial via email SMTP (.env).
      */
     public function store(Request $request): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        // Hapus permanen data akun sampah (soft-deleted) jika email/username sama agar bisa digunakan kembali
-        User::onlyTrashed()->where('email', $request->email)
-            ->when($request->username, fn($q) => $q->orWhere('username', $request->username))
-            ->forceDelete();
-
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['nullable', 'string', 'max:50', 'unique:users,username'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6'],
-            'privileges' => ['required', 'array', 'min:1', 'max:6'],
-            'privileges.*' => ['required', 'string', 'distinct', 'in:dashboard,publications,library,join-us,media-partners,settings'],
+            'name'         => ['required', 'string', 'max:255'],
+            'username'     => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9._]+$/', 'not_in:create,edit,invite', 'unique:users,username'],
+            'email'        => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password'     => ['required', 'string', 'min:6'],
+            'privileges'   => ['required', 'array', 'min:1'],
+            'privileges.*' => ['required', 'string', 'distinct', 'in:' . implode(',', User::MODULES)],
+        ], [
+            'username.required'   => 'Username wajib diisi.',
+            'username.regex'      => 'Username hanya boleh berisi huruf, angka, underscore (_), dan titik (.) tanpa spasi.',
+            'username.not_in'     => 'Username tersebut tidak boleh digunakan.',
+            'username.unique'     => 'Username sudah digunakan oleh admin lain.',
+            'privileges.required' => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
+            'privileges.min'      => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
         ]);
 
         $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['username'] ?: null,
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'admin',
-            'status' => 'approved',
-            'privileges' => $validated['privileges'],
+            'name'       => $validated['name'],
+            'username'   => $validated['username'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'role'       => 'admin',
+            'status'     => 'aktif',
+            'privileges' => $this->formatPrivileges($validated['privileges']),
         ]);
 
-        // Kirim email kredensial akun menggunakan Queue Job (Modul Bagian 7)
-        dispatch(new SendAdminInvitationJob($user, $validated['password']));
-
-        // Kirim notifikasi ke Super Admin (Modul Bagian 4)
-        if (Auth::user()) {
-            Auth::user()->notify(new NewAdminNotification($user));
+        $emailTerkirim = true;
+        try {
+            Mail::to($user->email)->send(new InviteAdminMail(
+                $user->name,
+                $user->username,
+                $validated['password']
+            ));
+        } catch (\Throwable $e) {
+            $emailTerkirim = false;
+            Log::error('Gagal mengirim email undangan admin: ' . $e->getMessage());
         }
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Akun admin "'.$validated['name'].'" berhasil ditambahkan dan email undangan telah dikirim via antrean (Queue).');
+        $pesan = $emailTerkirim
+            ? 'Akun admin "' . $validated['name'] . '" berhasil dibuat dan email undangan telah dikirim.'
+            : 'Akun admin "' . $validated['name'] . '" berhasil dibuat, namun email undangan gagal dikirim (cek konfigurasi SMTP).';
+
+        return redirect()->route('admin.users.index')->with('success', $pesan);
     }
 
     /**
-     * Show the dedicated form for editing an administrator account.
+     * Menampilkan form edit profil dan hak akses admin.
      */
-    public function edit(int|string $id): View
+    public function edit(string $username): View
     {
         $this->checkSuperAdmin();
 
-        $user = User::findOrFail($id);
+        $user = User::withTrashed()->where('username', $username)->firstOrFail();
 
         return view('admin.users.edit', compact('user'));
     }
 
     /**
-     * Update an administrator account.
+     * Memperbarui data dan hak akses admin.
      */
-    public function update(Request $request, int|string $id): RedirectResponse
+    public function update(Request $request, string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::findOrFail($id);
-
-        // Hapus permanen data akun sampah (soft-deleted) jika email/username sama agar bisa digunakan kembali
-        User::onlyTrashed()->where('email', $request->email)
-            ->when($request->username, fn($q) => $q->orWhere('username', $request->username))
-            ->forceDelete();
-
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['nullable', 'string', 'max:50', 'unique:users,username,'.$user->id],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'password' => ['nullable', 'string', 'min:6'],
-            'status' => $user->isSuperAdmin() ? ['nullable', 'in:approved'] : ['required', 'in:approved,pending'],
-            'privileges' => $user->isSuperAdmin() ? ['nullable', 'array'] : ['required', 'array', 'min:1', 'max:6'],
-            'privileges.*' => ['required', 'string', 'distinct', 'in:dashboard,publications,library,join-us,media-partners,settings'],
-        ]);
-
+        $user = User::withTrashed()->where('username', $username)->firstOrFail();
         $isSuperAdmin = $user->isSuperAdmin();
 
-        $userData = [
-            'name' => $validated['name'],
-            'username' => $validated['username'] ?: null,
-            'email' => $validated['email'],
-            'role' => $isSuperAdmin ? $user->role : 'admin',
-            'status' => $isSuperAdmin ? $user->status : $validated['status'],
-            'privileges' => $isSuperAdmin ? $user->privileges : $validated['privileges'],
-        ];
+        $validated = $request->validate([
+            'name'         => ['required', 'string', 'max:255'],
+            'username'     => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9._]+$/', 'not_in:create,edit,invite', 'unique:users,username,' . $user->id],
+            'email'        => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'password'     => ['nullable', 'string', 'min:6'],
+            'privileges'   => $isSuperAdmin ? ['nullable', 'array'] : ['required', 'array', 'min:1'],
+            'privileges.*' => ['required', 'string', 'distinct', 'in:' . implode(',', User::MODULES)],
+        ], [
+            'username.required'   => 'Username wajib diisi.',
+            'username.regex'      => 'Username hanya boleh berisi huruf, angka, underscore (_), dan titik (.) tanpa spasi.',
+            'username.not_in'     => 'Username tersebut tidak boleh digunakan.',
+            'username.unique'     => 'Username sudah digunakan oleh admin lain.',
+            'privileges.required' => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
+            'privileges.min'      => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
+        ]);
+
+        $user->name = $validated['name'];
+        $user->username = $validated['username'];
+        $user->email = $validated['email'];
+        $user->privileges = $isSuperAdmin
+            ? User::fullPrivileges()
+            : $this->formatPrivileges($validated['privileges']);
 
         if (! empty($validated['password'])) {
-            $userData['password'] = Hash::make($validated['password']);
+            $user->password = Hash::make($validated['password']);
         }
 
-        $user->update($userData);
+        $user->save();
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Data akun admin "'.$user->name.'" berhasil diperbarui.');
+            ->with('success', 'Data akun admin "' . $user->name . '" berhasil diperbarui.');
     }
 
     /**
-     * Quickly toggle status between approved and pending.
+     * Menonaktifkan akun admin (status = 'tidak aktif' + Soft Delete).
      */
-    public function toggleStatus(int|string $id): RedirectResponse
+    public function deactivate(string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::findOrFail($id);
+        $user = User::where('username', $username)->firstOrFail();
 
-        if (Auth::id() === $user->id) {
-            return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+        if ($user->isSuperAdmin() || Auth::id() === $user->id) {
+            return back()->with('error', 'Akun Super Admin tidak dapat dinonaktifkan sebelum jabatan dipindahtangankan.');
         }
 
-        $newStatus = $user->status === 'approved' ? 'pending' : 'approved';
-        $user->update(['status' => $newStatus]);
-
-        $statusLabel = $newStatus === 'approved' ? 'Aktif' : 'Nonaktif';
-
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Status peran "'.$user->name.'" berhasil diubah menjadi '.$statusLabel.'.');
-    }
-
-    /**
-     * Delete an administrator account.
-     */
-    public function destroy(int|string $id): RedirectResponse
-    {
-        $this->checkSuperAdmin();
-
-        $user = User::findOrFail($id);
-
-        if (Auth::id() === $user->id) {
-            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
-        }
-
-        $name = $user->name;
+        $user->update(['status' => 'tidak aktif']);
         $user->delete();
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'Akun admin "'.$name.'" berhasil dihapus.');
+            ->with('success', 'Akun admin "' . $user->name . '" telah dinonaktifkan.');
     }
 
-    public function showLoginForm()
+    /**
+     * Mengaktifkan kembali akun admin dari Soft Delete (restore + status = 'aktif').
+     */
+    public function restore(string $username): RedirectResponse
     {
-        return view('login');
+        $this->checkSuperAdmin();
+
+        $user = User::onlyTrashed()->where('username', $username)->firstOrFail();
+        $user->restore();
+        $user->update(['status' => 'aktif']);
+
+        return redirect()->route('admin.users.index', ['tab' => 'inactive'])
+            ->with('success', 'Akun admin "' . $user->name . '" berhasil diaktifkan kembali.');
     }
 
-    public function login(Request $request)
+    /**
+     * Menghapus akun secara permanen (khusus akun yang sudah dinonaktifkan).
+     */
+    public function forceDestroy(string $username): RedirectResponse
     {
-        $request->validate([
-            'login_id' => ['required', 'string'],
-            'password' => ['required'],
-        ]);
+        $this->checkSuperAdmin();
 
-        $loginId = $request->login_id;
-        $password = $request->password;
+        $user = User::onlyTrashed()->where('username', $username)->firstOrFail();
 
-        $user = User::withTrashed()
-            ->where('email', $loginId)
-            ->orWhere('username', $loginId)
-            ->first();
-
-        if (! $user || ! Hash::check($password, $user->password)) {
-            return back()->withErrors([
-                'login_id' => 'Email/Username atau password salah.',
-            ])->onlyInput('login_id');
+        if ($user->isSuperAdmin() || Auth::id() === $user->id) {
+            return back()->with('error', 'Akun Super Admin tidak dapat dihapus.');
         }
 
-        if ($user->trashed()) {
-            return back()->withErrors([
-                'login_id' => 'Akun Anda saat ini sedang dinonaktifkan.',
-            ])->onlyInput('login_id');
-        }
+        $name = $user->name;
+        $user->forceDelete();
 
-        if ($user->status === 'pending') {
-            return back()->withErrors([
-                'login_id' => 'Akun Anda masih dalam status Pending dan menunggu persetujuan dari Super Admin.',
-            ])->onlyInput('login_id');
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect()->intended('dashboard');
+        return redirect()->route('admin.users.index', ['tab' => 'inactive'])
+            ->with('success', 'Akun admin "' . $name . '" telah dihapus secara permanen.');
     }
 
-    public function logout(Request $request)
+    /**
+     * Memindahtangankan jabatan Super Admin ke admin aktif lainnya.
+     */
+    public function transferSuperAdmin(Request $request, string $username): RedirectResponse
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/');
-    }
-
-    public function inviteAdmin(Request $request)
-    {
-        if (! in_array(Auth::user()->role, ['super-admin', 'super_admin'])) {
-            return abort(403, 'Akses Ditolak. Hanya Super Admin yang dapat mengundang.');
-        }
+        $this->checkSuperAdmin();
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'unique:users'],
-            'email' => ['required', 'email', 'unique:users'],
-            'password' => ['required', 'min:6'],
-            'privileges' => ['required', 'array'],
+            'password'     => ['required', 'string', 'current_password'],
+            'confirmation' => ['required', 'string', 'in:TRANSFER'],
+        ], [
+            'password.required'         => 'Kata sandi Super Admin wajib diisi untuk verifikasi.',
+            'password.current_password' => 'Kata sandi Super Admin tidak sesuai.',
+            'confirmation.required'     => 'Ketik TRANSFER pada kolom konfirmasi.',
+            'confirmation.in'           => 'Konfirmasi harus diketik persis: TRANSFER (huruf kapital).',
         ]);
 
-        $newAdmin = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'admin',
-            'status' => 'approved',
-            'privileges' => $request->privileges,
-        ]);
+        $currentSuper = Auth::user();
+        $targetAdmin = User::where('username', $username)->firstOrFail();
 
-        // Kirim email kredensial akun menggunakan Queue Job (Modul Bagian 7)
-        dispatch(new SendAdminInvitationJob($newAdmin, $request->password));
-
-        // Kirim notifikasi ke Super Admin (Modul Bagian 4)
-        if (Auth::user()) {
-            Auth::user()->notify(new NewAdminNotification($newAdmin));
+        if ($targetAdmin->id === $currentSuper->id) {
+            return back()->with('error', 'Anda sudah menjabat sebagai Super Admin.');
         }
 
-        return back()->with('success', 'Admin berhasil dibuat dan email kredensial telah dimasukkan ke antrean pengiriman (Queue)!');
+        if ($targetAdmin->status !== 'aktif') {
+            return back()->with('error', 'Jabatan Super Admin hanya dapat dipindahkan ke admin yang berstatus aktif.');
+        }
+
+        DB::transaction(function () use ($currentSuper, $targetAdmin) {
+            $targetAdmin->update([
+                'role'       => 'super-admin',
+                'status'     => 'aktif',
+                'privileges' => User::fullPrivileges(),
+            ]);
+
+            $currentSuper->update([
+                'role'       => 'admin',
+                'privileges' => User::fullPrivileges(),
+            ]);
+        });
+
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Jabatan Super Admin berhasil dipindahkan ke "' . $targetAdmin->name . '".');
     }
 }

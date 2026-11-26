@@ -74,8 +74,6 @@ class PublicationController extends Controller
      */
     public function indexAdmin(Request $request)
     {
-        $this->checkPrivilege();
-
         $query = Publication::with('user');
 
         if ($request->filled('q')) {

@@ -30,7 +30,7 @@ class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string'],
+            'email'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
@@ -40,15 +40,16 @@ class AuthController extends Controller
         $password = $credentials['password'];
         $remember = $request->boolean('remember');
 
-        // Allow logging in via email OR username
-        $user = User::where('email', $loginInput)
+        // Cari user via email atau username, termasuk yang sedang dinonaktifkan (soft-deleted)
+        $user = User::withTrashed()
+            ->where('email', $loginInput)
             ->orWhere('username', $loginInput)
             ->first();
 
         if ($user && Hash::check($password, $user->password)) {
-            if ($user->status === 'pending') {
+            if ($user->trashed() || $user->status === 'tidak aktif') {
                 throw ValidationException::withMessages([
-                    'email' => 'Akun Anda masih dalam status Pending dan menunggu persetujuan dari Super Admin.',
+                    'email' => 'Akun Anda saat ini sedang dinonaktifkan. Silakan hubungi Super Admin.',
                 ]);
             }
 
@@ -109,6 +110,6 @@ class AuthController extends Controller
      */
     protected function throttleKey(Request $request): string
     {
-        return Str::transliterate(Str::lower($request->input('email')).'|'.$request->ip());
+        return Str::transliterate(Str::lower($request->input('email')) . '|' . $request->ip());
     }
 }

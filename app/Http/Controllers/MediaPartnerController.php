@@ -2,79 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MediaPartner;
 use App\Models\Publication;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Throwable;
 
 class MediaPartnerController extends Controller
 {
-    /**
-     * Storage path for media partners json.
-     */
-    public static function getStoragePath(): string
-    {
-        return storage_path('app/media_partners.json');
-    }
-
-    /**
-     * Get media partners with defaults.
-     */
     public static function getPartners(): array
     {
-        $path = self::getStoragePath();
-        $defaults = [
-            [
-                'id' => 1,
-                'name' => 'Kereta Api Indonesia (KAI)',
-                'logo' => 'kai.svg',
-            ],
-            [
-                'id' => 2,
-                'name' => 'Garuda Indonesia',
-                'logo' => 'garuda.svg',
-            ],
-            [
-                'id' => 3,
-                'name' => 'Telkom Indonesia',
-                'logo' => 'telkom.svg',
-            ],
-            [
-                'id' => 4,
-                'name' => 'Pertamina',
-                'logo' => 'pertamina.svg',
-            ],
-            [
-                'id' => 5,
-                'name' => 'Kementerian Pendidikan',
-                'logo' => 'kementrian.jpg',
-            ],
-            [
-                'id' => 6,
-                'name' => 'Universitas Gadjah Mada',
-                'logo' => 'ugm.png',
-            ],
-            [
-                'id' => 7,
-                'name' => 'BRI Peduli',
-                'logo' => 'bri-peduli.png',
-            ],
-            [
-                'id' => 8,
-                'name' => 'KMTEDI',
-                'logo' => 'kmtedi.jpg',
-            ],
-        ];
-
-        if (File::exists($path)) {
-            $saved = json_decode(File::get($path), true);
-            if (is_array($saved) && count($saved) > 0) {
-                return $saved;
+        try {
+            if (! Schema::hasTable('media_partners')) {
+                return [];
             }
-        }
 
-        return $defaults;
+            return MediaPartner::latest()
+                ->get()
+                ->map(fn ($partner) => [
+                    'id'   => $partner->id,
+                    'name' => $partner->name,
+                    'logo' => $partner->image_path,
+                ])
+                ->toArray();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**
@@ -121,10 +78,7 @@ class MediaPartnerController extends Controller
     {
         $allPartners = self::getPartners();
         $perPage = 8;
-        $page = (int) $request->input('partner_page', $request->input('page', 1));
-        if ($page < 1) {
-            $page = 1;
-        }
+        $page = max(1, (int) $request->input('partner_page', $request->input('page', 1)));
         $offset = ($page - 1) * $perPage;
         $currentPartners = array_slice($allPartners, $offset, $perPage);
 
@@ -155,43 +109,22 @@ class MediaPartnerController extends Controller
     }
 
     /**
-     * Save partners array.
-     */
-    protected static function savePartners(array $partners): void
-    {
-        $dir = dirname(self::getStoragePath());
-        if (! File::isDirectory($dir)) {
-            File::makeDirectory($dir, 0755, true);
-        }
-
-        File::put(self::getStoragePath(), json_encode($partners, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-    }
-
-    /**
      * Check if user has permission to manage Media Partners.
      */
     protected function checkPrivilege(): void
     {
-        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('media-partners')) {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('media_partners')) {
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Media Partner.');
         }
     }
 
-    /**
-     * Display media partners in admin panel.
-     */
     public function indexAdmin()
     {
-        $this->checkPrivilege();
-
         $partners = self::getPartners();
 
         return view('admin.media-partners.index', compact('partners'));
     }
 
-    /**
-     * Show dedicated create page for media partner.
-     */
     public function createAdmin()
     {
         $this->checkPrivilege();
@@ -199,124 +132,92 @@ class MediaPartnerController extends Controller
         return view('admin.media-partners.create');
     }
 
-    /**
-     * Show dedicated edit page for media partner.
-     */
     public function editAdmin($id)
     {
         $this->checkPrivilege();
+        $record = MediaPartner::findOrFail($id);
 
-        $partners = self::getPartners();
-        $partner = null;
-        foreach ($partners as $p) {
-            if ($p['id'] == $id) {
-                $partner = $p;
-                break;
-            }
-        }
-
-        if (! $partner) {
-            abort(404, 'Media partner tidak ditemukan.');
-        }
+        $partner = [
+            'id'   => $record->id,
+            'name' => $record->name,
+            'logo' => $record->image_path,
+        ];
 
         return view('admin.media-partners.edit', compact('partner'));
     }
 
-    /**
-     * Store a new media partner.
-     */
     public function storeAdmin(Request $request)
     {
         $this->checkPrivilege();
 
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+        $validated = $request->validate([
+            'name'       => ['required', 'string', 'max:255'],
             'logo_image' => ['required', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:3072'],
         ]);
 
-        $partners = self::getPartners();
-        $nextId = count($partners) > 0 ? max(array_column($partners, 'id')) + 1 : 1;
-
         $file = $request->file('logo_image');
-        $fileName = 'partner_'.time().'_'.Str::random(5).'.'.$file->getClientOriginalExtension();
+        $fileName = 'partner_' . time() . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
         $destination = public_path('assets/images/partners');
 
-        if (! File::isDirectory($destination)) {
-            File::makeDirectory($destination, 0755, true);
-        }
-
+        File::ensureDirectoryExists($destination);
         $file->move($destination, $fileName);
 
-        $partners[] = [
-            'id' => $nextId,
-            'name' => $request->input('name'),
-            'logo' => $fileName,
-        ];
-
-        self::savePartners($partners);
+        MediaPartner::create([
+            'name'       => $validated['name'],
+            'image_path' => $fileName,
+            'created_by' => Auth::id(),
+        ]);
 
         return redirect()->route('admin.media-partners.index')
-            ->with('success', 'Logo media partner "'.$request->input('name').'" berhasil ditambahkan!');
+            ->with('success', 'Logo media partner "' . $validated['name'] . '" berhasil ditambahkan!');
     }
 
-    /**
-     * Update an existing media partner logo.
-     */
     public function updateAdmin(Request $request, $id)
     {
         $this->checkPrivilege();
 
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+        $partner = MediaPartner::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'       => ['required', 'string', 'max:255'],
             'logo_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,svg,webp', 'max:3072'],
         ]);
 
-        $partners = self::getPartners();
-        $found = false;
+        $partner->name = $validated['name'];
 
-        foreach ($partners as &$partner) {
-            if ($partner['id'] == $id) {
-                $partner['name'] = $request->input('name');
+        if ($request->hasFile('logo_image')) {
+            $destination = public_path('assets/images/partners');
+            File::ensureDirectoryExists($destination);
 
-                if ($request->hasFile('logo_image')) {
-                    $file = $request->file('logo_image');
-                    $fileName = 'partner_'.time().'_'.Str::random(5).'.'.$file->getClientOriginalExtension();
-                    $destination = public_path('assets/images/partners');
-
-                    if (! File::isDirectory($destination)) {
-                        File::makeDirectory($destination, 0755, true);
-                    }
-
-                    $file->move($destination, $fileName);
-                    $partner['logo'] = $fileName;
-                }
-
-                $found = true;
-                break;
+            if ($partner->image_path && File::exists($destination . '/' . $partner->image_path)) {
+                @unlink($destination . '/' . $partner->image_path);
             }
+
+            $file = $request->file('logo_image');
+            $fileName = 'partner_' . time() . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+            $file->move($destination, $fileName);
+
+            $partner->image_path = $fileName;
         }
 
-        if ($found) {
-            self::savePartners($partners);
-        }
+        $partner->save();
 
         return redirect()->route('admin.media-partners.index')
             ->with('success', 'Media partner berhasil diperbarui!');
     }
 
-    /**
-     * Delete a media partner.
-     */
     public function destroyAdmin($id)
     {
         $this->checkPrivilege();
 
-        $partners = self::getPartners();
-        $filtered = array_values(array_filter($partners, function ($p) use ($id) {
-            return $p['id'] != $id;
-        }));
+        $partner = MediaPartner::findOrFail($id);
+        $filePath = public_path('assets/images/partners/' . $partner->image_path);
 
-        self::savePartners($filtered);
+        if ($partner->image_path && File::exists($filePath)) {
+            @unlink($filePath);
+        }
+
+        $partner->delete();
 
         return redirect()->route('admin.media-partners.index')
             ->with('success', 'Logo media partner berhasil dihapus!');

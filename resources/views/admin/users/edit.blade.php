@@ -59,7 +59,7 @@
 
     <!-- Main Full-Page Edit Form -->
     <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 sm:p-8 max-w-3xl">
-        <form action="{{ route('admin.users.update', $user->id) }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.users.update', $user->username) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
 
@@ -84,13 +84,19 @@
                 <!-- Username & Email -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username <span class="text-rose-500">*</span></label>
                         <input 
                             type="text" 
                             name="username" 
+                            required
+                            minlength="3"
+                            maxlength="50"
+                            pattern="[a-zA-Z0-9._]+"
+                            title="Hanya boleh huruf, angka, underscore (_), dan titik (.) tanpa spasi"
                             value="{{ old('username', $user->username) }}" 
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]"
                         >
+                        <p class="text-[11px] text-slate-400 mt-1">Hanya huruf, angka, underscore (_), dan titik (.), tanpa spasi.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1.5">Email <span class="text-rose-500">*</span></label>
@@ -115,87 +121,85 @@
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]"
                     >
                 </div>
-
-                @if (! $user->isSuperAdmin())
-                    <div>
-                        <label for="account-status" class="block text-xs font-semibold text-slate-700 mb-1.5">Status Akun <span class="text-rose-500">*</span></label>
-                        <select id="account-status" name="status" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]">
-                            <option value="approved" @selected(old('status', $user->status) === 'approved')>Aktif</option>
-                            <option value="pending" @selected(old('status', $user->status) === 'pending')>Nonaktif</option>
-                        </select>
-                    </div>
-                @endif
             </div>
 
             <!-- Peran & Hak Akses Halaman -->
-            <div class="space-y-4 pt-2">
-                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
-                    Peran &amp; Hak Akses
-                </h2>
+            @php
+                $isSuper = $user->isSuperAdmin();
+            @endphp
 
-                @php
-                    $isSuper = $user->isSuperAdmin();
-                @endphp
+            @if (! $isSuper)
+                <div class="space-y-4 pt-2">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+                        Peran &amp; Hak Akses Kelola (Create, Update, Delete)
+                    </h2>
 
-                <!-- Dropdown Checklist Akses Halaman (1-6) -->
-                <div id="privileges-container" class="space-y-2">
-                    <!-- Interactive Dropdown Checklist Trigger -->
-                    <div class="relative {{ $isSuper ? 'hidden' : '' }}" id="privilege-dropdown-wrapper">
-                        <button 
-                            type="button" 
-                            id="privilege-dropdown-btn" 
-                            aria-label="Pilih halaman yang dapat diakses"
-                            onclick="togglePrivilegeDropdown()"
-                            class="w-full flex items-center justify-between px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-left text-xs sm:text-sm hover:border-[#0A2373] focus:outline-none focus:border-[#0A2373] transition cursor-pointer"
-                        >
-                            <span id="privilege-summary-text" class="text-slate-700 font-medium truncate">Pilih halaman</span>
-                            <i id="privilege-chevron" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200 ml-2"></i>
-                        </button>
+                    <div id="privileges-container" class="space-y-2">
+                        <div class="relative" id="privilege-dropdown-wrapper">
+                            <button 
+                                type="button" 
+                                id="privilege-dropdown-btn" 
+                                aria-label="Pilih halaman yang dapat dikelola"
+                                onclick="togglePrivilegeDropdown()"
+                                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-left text-xs sm:text-sm hover:border-[#0A2373] focus:outline-none focus:border-[#0A2373] transition cursor-pointer"
+                            >
+                                <span id="privilege-summary-text" class="text-slate-700 font-medium truncate">Pilih halaman</span>
+                                <i id="privilege-chevron" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200 ml-2"></i>
+                            </button>
 
-                        <!-- Dropdown Panel with Checkboxes -->
-                        <div 
-                            id="privilege-dropdown-panel" 
-                            class="hidden mt-2 p-3 bg-white border border-slate-200 rounded-xl shadow-lg space-y-2 z-20"
-                        >
-                            <div class="flex flex-col gap-1" id="privilege-checkboxes">
-                                @php
-                                    $availablePages = [
-                                        'dashboard' => ['label' => '01. Dashboard'],
-                                        'publications' => ['label' => '02. Publication'],
-                                        'library' => ['label' => '03. Digital Library'],
-                                        'join-us' => ['label' => '04. Join Us'],
-                                        'media-partners' => ['label' => '05. Partnership'],
-                                        'settings' => ['label' => '06. Identitas & Konten'],
-                                    ];
-
-                                    $userPrivs = $user->privileges ?? [];
-                                    if (is_string($userPrivs)) {
-                                        $userPrivs = json_decode($userPrivs, true) ?? [];
-                                    }
-                                @endphp
-
-                                @foreach ($availablePages as $key => $page)
+                            <div 
+                                id="privilege-dropdown-panel" 
+                                class="hidden mt-2 p-3 bg-white border border-slate-200 rounded-xl shadow-lg space-y-2 z-20"
+                            >
+                                <div class="flex flex-col gap-1" id="privilege-checkboxes">
                                     @php
-                                        $checked = $isSuper || in_array($key, old('privileges', $userPrivs));
+                                        $availablePages = [
+                                            'publikasi'        => ['label' => '02. Publication'],
+                                            'digital_library'  => ['label' => '03. Digital Library'],
+                                            'join_us'          => ['label' => '04. Join Us'],
+                                            'media_partners'   => ['label' => '05. Partnership'],
+                                            'identitas_konten' => ['label' => '06. Identitas & Konten'],
+                                        ];
+
+                                        $rawPrivs = $user->privileges ?? [];
+                                        if (is_string($rawPrivs)) {
+                                            $rawPrivs = json_decode($rawPrivs, true) ?? [];
+                                        }
+
+                                        $defaultPrivs = [];
+                                        if (is_array($rawPrivs)) {
+                                            foreach ($rawPrivs as $k => $v) {
+                                                if (is_string($k) && $v) {
+                                                    $defaultPrivs[] = $k;
+                                                } elseif (is_int($k) && is_string($v)) {
+                                                    $defaultPrivs[] = $v;
+                                                }
+                                            }
+                                        }
+
+                                        $selectedPrivs = old('privileges', $defaultPrivs);
                                     @endphp
-                                    <label class="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer transition">
-                                        <input 
-                                            type="checkbox" 
-                                            name="privileges[]" 
-                                            value="{{ $key }}" 
-                                            class="privilege-checkbox mt-0.5 rounded text-[#0A2373] focus:ring-[#0A2373]"
-                                            onchange="updatePrivilegeSummary()"
-                                            @checked($checked)
-                                        >
-                                        <span class="text-xs font-semibold text-slate-800">{{ $page['label'] }}</span>
-                                    </label>
-                                @endforeach
+
+                                    @foreach ($availablePages as $key => $page)
+                                        <label class="flex items-center gap-2.5 p-2 rounded-lg border border-slate-100 hover:bg-slate-50 cursor-pointer transition">
+                                            <input 
+                                                type="checkbox" 
+                                                name="privileges[]" 
+                                                value="{{ $key }}" 
+                                                class="privilege-checkbox mt-0.5 rounded text-[#0A2373] focus:ring-[#0A2373]"
+                                                onchange="updatePrivilegeSummary()"
+                                                @checked(in_array($key, $selectedPrivs, true))
+                                            >
+                                            <span class="text-xs font-semibold text-slate-800">{{ $page['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
+                        <p class="text-[11px] text-slate-400">Semua admin tetap memiliki akses lihat (Read) ke seluruh menu termasuk 01. Dashboard.</p>
                     </div>
-
                 </div>
-            </div>
+            @endif
 
             <!-- Form Actions -->
             <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
@@ -219,6 +223,8 @@
         function togglePrivilegeDropdown() {
             const panel = document.getElementById('privilege-dropdown-panel');
             const chevron = document.getElementById('privilege-chevron');
+            if (!panel || !chevron) return;
+
             if (panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
                 chevron.classList.add('rotate-180');
@@ -231,18 +237,18 @@
         function updatePrivilegeSummary() {
             const checkboxes = document.querySelectorAll('.privilege-checkbox:checked');
             const summaryText = document.getElementById('privilege-summary-text');
+            if (!summaryText) return;
+
             const count = checkboxes.length;
-            
             if (count === 0) {
-                summaryText.textContent = 'Pilih halaman';
-                summaryText.className = 'text-rose-600 font-medium truncate';
+                summaryText.textContent = '0 halaman kelola dipilih (Hanya lihat)';
+                summaryText.className = 'text-slate-500 font-medium truncate';
             } else {
-                summaryText.textContent = `${checkboxes.length} halaman dipilih`;
+                summaryText.textContent = `${count} halaman kelola dipilih`;
                 summaryText.className = 'text-slate-800 font-medium truncate';
             }
         }
 
-        // Initialize state
         document.addEventListener('DOMContentLoaded', () => {
             updatePrivilegeSummary();
         });

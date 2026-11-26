@@ -77,8 +77,6 @@ class BookController extends Controller
      */
     public function indexAdmin(Request $request)
     {
-        $this->checkPrivilege();
-
         $query = Book::with(['author', 'publisher', 'genre'])->latest();
 
         if ($request->filled('q')) {

@@ -45,10 +45,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/admin/dashboard', function () {
-        if (! Auth::user()->hasPrivilege('dashboard')) {
-            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses Dashboard.');
-        }
-
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
@@ -84,17 +80,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/settings', [SettingController::class, 'indexAdmin'])->name('admin.settings.index');
     Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
 
-    Route::get('/admin/users', [UserController::class, 'indexAdmin'])->name('admin.users.index');
-    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
-    Route::get('/admin/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
-    Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
-    Route::put('/admin/users/{id}', [UserController::class, 'update'])->name('admin.users.update');
-    Route::match(['post', 'patch'], '/admin/users/{id}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status');
-    Route::delete('/admin/users/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
-
     // Route super admin
     Route::post('/admin/invite', [UserController::class, 'inviteAdmin']);
 
+    Route::get('/admin/users', [UserController::class, 'indexAdmin'])->name('admin.users.index');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('admin.users.create');
+    Route::post('/admin/users', [UserController::class, 'store'])->name('admin.users.store');
+    Route::get('/admin/users/{username}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/admin/users/{username}', [UserController::class, 'update'])->name('admin.users.update');
+
+    Route::patch('/admin/users/{username}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate');
+    Route::patch('/admin/users/{username}/restore', [UserController::class, 'restore'])->name('admin.users.restore');
+    Route::delete('/admin/users/{username}/force-delete', [UserController::class, 'forceDestroy'])->name('admin.users.force-delete');
+    Route::post('/admin/users/{username}/transfer-super-admin', [UserController::class, 'transferSuperAdmin'])->name('admin.users.transfer-super-admin');
+    
     Route::redirect('/admin', '/admin/dashboard');
     Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
     Route::redirect('/workspace/dashboard', '/admin/dashboard');

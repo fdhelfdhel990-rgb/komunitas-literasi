@@ -71,7 +71,7 @@
             <!-- Email / Username -->
             <div>
                 <label for="email" class="block text-xs sm:text-sm font-medium text-slate-800 mb-1.5">
-                    Email
+                    Email/Username
                 </label>
                 <input 
                     type="text" 

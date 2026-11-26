@@ -43,8 +43,7 @@
                 </button>
             </div>
 
-            <!-- 01 UMUM -->
-            @if(auth()->user() && auth()->user()->hasPrivilege('dashboard'))
+            <!-- 01 UMUM (Terbuka untuk semua admin) -->
             <div class="mb-6">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
                     Umum
@@ -59,25 +58,13 @@
                     </a>
                 </nav>
             </div>
-            @endif
 
-            <!-- MANAJEMEN KONTEN -->
-            @php
-                $hasContentAccess = auth()->user() && (
-                    auth()->user()->hasPrivilege('publications') ||
-                    auth()->user()->hasPrivilege('library') ||
-                    auth()->user()->hasPrivilege('join-us') ||
-                    auth()->user()->hasPrivilege('media-partners') ||
-                    auth()->user()->hasPrivilege('settings')
-                );
-            @endphp
-            @if($hasContentAccess)
+            <!-- 02 - 06 MANAJEMEN KONTEN (Semua admin bisa melihat/Read; tombol CUD diatur di tiap halaman) -->
             <div class="mb-6">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
                     Manajemen Konten
                 </span>
                 <nav class="space-y-1 text-sm font-medium">
-                    @if(auth()->user()->hasPrivilege('publications'))
                     <a 
                         href="{{ route('admin.publications.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.publications.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -85,8 +72,7 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.publications.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">02</span>
                         <span>Publication</span>
                     </a>
-                    @endif
-                    @if(auth()->user()->hasPrivilege('library'))
+
                     <a 
                         href="{{ route('admin.library.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.library.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -94,8 +80,7 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.library.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">03</span>
                         <span>Digital Library</span>
                     </a>
-                    @endif
-                    @if(auth()->user()->hasPrivilege('join-us'))
+
                     <a 
                         href="{{ route('admin.join-us.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.join-us.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -103,8 +88,7 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.join-us.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">04</span>
                         <span>Join Us</span>
                     </a>
-                    @endif
-                    @if(auth()->user()->hasPrivilege('media-partners'))
+
                     <a 
                         href="{{ route('admin.media-partners.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.media-partners.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -112,8 +96,7 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.media-partners.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">05</span>
                         <span>Partnership</span>
                     </a>
-                    @endif
-                    @if(auth()->user()->hasPrivilege('settings'))
+
                     <a 
                         href="{{ route('admin.settings.index') }}" 
                         class="flex items-center gap-3 px-3.5 py-2 rounded-xl transition {{ request()->routeIs('admin.settings.*') ? 'bg-[#E8EEF8] text-[#0A2373] font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
@@ -121,12 +104,10 @@
                         <span class="text-xs font-['Poppins'] font-bold {{ request()->routeIs('admin.settings.*') ? 'text-[#0A2373]' : 'text-slate-400' }}">06</span>
                         <span>Identitas &amp; Konten</span>
                     </a>
-                    @endif
                 </nav>
             </div>
-            @endif
 
-            <!-- PENGATURAN AKSES -->
+            <!-- 07 PENGATURAN AKSES (Hanya Super Admin) -->
             @if(auth()->user() && auth()->user()->isSuperAdmin())
             <div>
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
@@ -183,7 +164,7 @@
                     </div>
                     <div class="text-left leading-tight hidden sm:block">
                         <div class="text-sm font-semibold text-slate-900 max-w-[120px] md:max-w-[180px] truncate">{{ Auth::user()?->name ?? 'Admin Literasi' }}</div>
-                        <div class="text-xs text-slate-400 capitalize">{{ (Auth::user()?->role === 'super_admin') ? 'Super admin' : 'Admin' }}</div>
+                        <div class="text-xs text-slate-400">{{ Auth::user()?->isSuperAdmin() ? 'Super Admin' : 'Admin' }}</div>
                     </div>
                 </div>
 
@@ -261,14 +242,12 @@
             if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
             if (backdrop) backdrop.addEventListener('click', closeSidebar);
 
-            // Close on escape key
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 1024) {
                     closeSidebar();
                 }
             });
 
-            // Auto-close on resize to large screen
             window.addEventListener('resize', function () {
                 if (window.innerWidth >= 1024 && backdrop) {
                     backdrop.classList.add('hidden', 'opacity-0');
