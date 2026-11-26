@@ -7,6 +7,7 @@
     @php
         $activeList = $users->filter(fn ($u) => $u->status === 'aktif' && ! $u->trashed())->values();
         $inactiveList = $users->filter(fn ($u) => $u->status === 'tidak aktif' || $u->trashed())->values();
+        $eligibleTransferAdmins = $activeList->filter(fn ($u) => ! $u->isSuperAdmin() && $u->id !== Auth::id())->values();
     @endphp
 
     <!-- Flash Notifications -->
@@ -91,7 +92,7 @@
                 role="tab"
                 aria-selected="true"
                 onclick="switchAdminTab('active')"
-                class="flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-[#E8EEF8] text-[#0A2373] border-b-2 border-[#0A2373]"
+                class="flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-[#E8EEF8] text-[#0A2373] border-b-2 border-[#0A2373]"
             >
                 Admin Aktif
             </button>
@@ -102,7 +103,7 @@
                 role="tab"
                 aria-selected="false"
                 onclick="switchAdminTab('inactive')"
-                class="flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800"
+                class="flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800"
             >
                 Admin Nonaktif
             </button>
@@ -158,10 +159,9 @@
                                     Aktif
                                 </span>
                             </td>
-                            <!-- Action Column (Aktif) -->
+                            <!-- Action Column (Aktif: Edit & Nonaktifkan) -->
                             <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <!-- Edit Profil & Hak Akses -->
                                     <a 
                                         href="{{ route('admin.users.edit', $u->id) }}" 
                                         title="Edit Profil &amp; Hak Akses"
@@ -171,23 +171,14 @@
                                     </a>
 
                                     @if (! $isCurrentUser && ! $isSuper)
-                                        <!-- Jadikan Super Admin -->
-                                        <form action="{{ route('admin.users.transfer-super-admin', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Pindahtangankan jabatan Super Admin ke {{ addslashes($u->name) }}? Anda akan turun menjadi Admin biasa.')">
-                                            @csrf
-                                            <button 
-                                                type="submit" 
-                                                title="Jadikan Super Admin"
-                                                class="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition cursor-pointer"
-                                            >
-                                                <i class="fa-solid fa-crown text-xs"></i>
-                                            </button>
-                                        </form>
-
-                                        <!-- Nonaktifkan Akun (Ikon Power Off) -->
-                                        <form action="{{ route('admin.users.deactivate', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan akun admin {{ addslashes($u->name) }}?')">
+                                        <form action="{{ route('admin.users.deactivate', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan akun admin {{ addslashes($u->name) }}? Akun akan dipindahkan ke daftar Admin Nonaktif dan tidak bisa login.')">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" title="Nonaktifkan Akun" class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-900/10 hover:text-rose-900 hover:border-rose-900/30 transition cursor-pointer">
+                                            <button 
+                                                type="submit" 
+                                                title="Nonaktifkan Akun"
+                                                class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-900/10 hover:text-rose-900 hover:border-rose-900/30 transition cursor-pointer"
+                                            >
                                                 <i class="fa-solid fa-power-off text-xs"></i>
                                             </button>
                                         </form>
@@ -252,7 +243,6 @@
                             <!-- Action Column (Nonaktif: Aktifkan & Hapus Permanen) -->
                             <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <!-- Aktifkan Akun (Restore) -->
                                     <form action="{{ route('admin.users.restore', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Aktifkan kembali akun admin {{ addslashes($u->name) }}?')">
                                         @csrf
                                         @method('PATCH')
@@ -265,11 +255,14 @@
                                         </button>
                                     </form>
 
-                                    <!-- Hapus Akun Permanen (Force Delete) -->
-                                    <form action="{{ route('admin.users.force-delete', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('HAPUS PERMANEN akun {{ addslashes($u->name) }}?')">
+                                    <form action="{{ route('admin.users.force-delete', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('HAPUS PERMANEN akun {{ addslashes($u->name) }}? Data akun akan hilang selamanya dan tidak dapat dikembalikan!')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" title="Hapus Akun Permanen" class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-900/10 hover:text-rose-900 hover:border-rose-900/30 transition cursor-pointer">
+                                        <button 
+                                            type="submit" 
+                                            title="Hapus Akun Permanen"
+                                            class="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-900/10 hover:text-rose-900 hover:border-rose-900/30 transition cursor-pointer"
+                                        >
                                             <i class="fa-regular fa-trash-can text-xs"></i>
                                         </button>
                                     </form>
@@ -288,6 +281,95 @@
         </div>
     </div>
 
+    <!-- ============================================================== -->
+    <!-- TRANSFER SUPER ADMIN                                     -->
+    <!-- ============================================================== -->
+    <div class="mt-8 bg-white rounded-2xl border border-slate-200/90 shadow-xs p-6 sm:p-8">
+        <div class="mb-4">
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">
+                Transfer Super Admin
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Pilih akun penerima dan verifikasi kepemilikan sebelum melanjutkan.
+            </p>
+        </div>
+
+        <div class="mb-6 rounded-xl bg-amber-50/90 border border-amber-200/90 px-4 py-3 text-xs sm:text-sm text-amber-800">
+            Perhatian: tindakan ini akan memindahkan seluruh hak super admin kepada akun yang dipilih.
+        </div>
+
+        <form id="transfer-super-admin-form" method="POST" onsubmit="return handleTransferSubmit(event)" class="space-y-6">
+            @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                <div>
+                    <label for="transfer-target-select" class="block text-xs font-semibold text-slate-800 mb-1.5">
+                        Admin penerima
+                    </label>
+                    <select
+                        id="transfer-target-select"
+                        required
+                        onchange="updateTransferFormAction()"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-700 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373] transition cursor-pointer"
+                    >
+                        <option value="">Pilih admin penerima</option>
+                        @foreach ($eligibleTransferAdmins as $candidate)
+                            <option
+                                value="{{ $candidate->id }}"
+                                data-url="{{ route('admin.users.transfer-super-admin', $candidate->id) }}"
+                                data-name="{{ $candidate->name }}"
+                            >
+                                {{ $candidate->name }} ({{ $candidate->username ?? $candidate->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="transfer-password" class="block text-xs font-semibold text-slate-800 mb-1.5">
+                        Kata sandi super admin
+                    </label>
+                    <input
+                        type="password"
+                        id="transfer-password"
+                        name="password"
+                        required
+                        placeholder="Masukkan kata sandi"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373] transition"
+                    >
+                </div>
+
+                <div>
+                    <label for="transfer-confirmation" class="block text-xs font-semibold text-slate-800 mb-1.5">
+                        Konfirmasi Transfer Super Admin
+                    </label>
+                    <input
+                        type="text"
+                        id="transfer-confirmation"
+                        name="confirmation"
+                        required
+                        autocomplete="off"
+                        placeholder="Ketik TRANSFER"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373] transition"
+                    >
+                </div>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <p class="text-xs text-slate-500">
+                    Transfer hanya dapat dilakukan oleh pemilik akun super admin yang aktif.
+                </p>
+
+                <button
+                    type="submit"
+                    class="px-5 py-2.5 rounded-xl bg-[#A32015] hover:bg-[#871910] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold transition shadow-xs cursor-pointer whitespace-nowrap self-end sm:self-auto"
+                >
+                    Transfer Kepemilikan
+                </button>
+            </div>
+        </form>
+    </div>
+
     <script>
         function switchAdminTab(tab) {
             const isActiveTab = tab === 'active';
@@ -304,12 +386,43 @@
             btnInactive.setAttribute('aria-selected', !isActiveTab ? 'true' : 'false');
 
             if (isActiveTab) {
-                btnActive.className = 'flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-[#E8EEF8] text-[#0A2373] border-b-2 border-[#0A2373]';
-                btnInactive.className = 'flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800';
+                btnActive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-[#E8EEF8] text-[#0A2373] border-b-2 border-[#0A2373]';
+                btnInactive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800';
             } else {
-                btnInactive.className = 'flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-rose-900/10 text-rose-900 border-b-2 border-rose-800';
-                btnActive.className = 'flex items-center justify-center px-5 py-3 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800';
+                btnInactive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-rose-900/10 text-rose-900 border-b-2 border-rose-800';
+                btnActive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800';
             }
+        }
+
+        function updateTransferFormAction() {
+            const select = document.getElementById('transfer-target-select');
+            const form = document.getElementById('transfer-super-admin-form');
+            const selectedOption = select.options[select.selectedIndex];
+
+            form.action = selectedOption ? (selectedOption.getAttribute('data-url') || '') : '';
+        }
+
+        function handleTransferSubmit(event) {
+            const select = document.getElementById('transfer-target-select');
+            const confirmationInput = document.getElementById('transfer-confirmation');
+            const selectedOption = select.options[select.selectedIndex];
+
+            if (!select.value || !selectedOption.getAttribute('data-url')) {
+                event.preventDefault();
+                alert('Silakan pilih admin penerima terlebih dahulu.');
+                select.focus();
+                return false;
+            }
+
+            if (confirmationInput.value.trim() !== 'TRANSFER') {
+                event.preventDefault();
+                alert('Ketik kata TRANSFER dengan huruf kapital pada kolom konfirmasi.');
+                confirmationInput.focus();
+                return false;
+            }
+
+            const targetName = selectedOption.getAttribute('data-name');
+            return confirm(`Apakah Anda yakin ingin memindahkan jabatan Super Admin ke "${targetName}"? Jabatan Anda akan otomatis turun menjadi Admin biasa.`);
         }
     </script>
 @endsection

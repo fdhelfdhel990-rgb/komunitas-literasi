@@ -56,7 +56,7 @@
             <span class="text-xs font-['Poppins'] font-bold text-slate-400 block mb-3">AD</span>
             <div class="text-xs text-slate-500 font-medium mb-1">Akun admin aktif</div>
             <div class="text-2xl sm:text-3xl font-bold text-slate-900 mb-4">
-                {{ \App\Models\User::where('status', 'aktif')->count() > 0 ? \App\Models\User::where('status', 'approved')->count() : 1 }}
+                {{ \App\Models\User::where('status', 'aktif')->count() > 0 ? \App\Models\User::where('status', 'aktif')->count() : 1 }}
             </div>
             <a href="{{ route('admin.users.index') }}" class="text-xs font-semibold text-[#0A2373] hover:underline flex items-center gap-1.5">
                 <span>Kelola akses</span>

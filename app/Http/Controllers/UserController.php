@@ -220,9 +220,19 @@ class UserController extends Controller
     /**
      * Memindahtangankan jabatan Super Admin ke admin aktif lainnya.
      */
-    public function transferSuperAdmin(int|string $id): RedirectResponse
+    public function transferSuperAdmin(Request $request, int|string $id): RedirectResponse
     {
         $this->checkSuperAdmin();
+
+        $request->validate([
+            'password'     => ['required', 'string', 'current_password'],
+            'confirmation' => ['required', 'string', 'in:TRANSFER'],
+        ], [
+            'password.required'         => 'Kata sandi Super Admin wajib diisi untuk verifikasi.',
+            'password.current_password' => 'Kata sandi Super Admin tidak sesuai.',
+            'confirmation.required'     => 'Ketik TRANSFER pada kolom konfirmasi.',
+            'confirmation.in'           => 'Konfirmasi harus diketik persis: TRANSFER (huruf kapital).',
+        ]);
 
         $currentSuper = Auth::user();
         $targetAdmin = User::findOrFail($id);
