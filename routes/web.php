@@ -45,10 +45,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/admin/dashboard', function () {
-        if (! Auth::user()->hasPrivilege('dashboard')) {
-            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses Dashboard.');
-        }
-
         return view('admin.dashboard');
     })->name('admin.dashboard');
 

@@ -134,15 +134,13 @@ class JoinUsController extends Controller
      */
     protected function checkPrivilege(): void
     {
-        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('join-us')) {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('join_us')) {
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Join Us.');
         }
     }
 
     public function indexAdmin(Request $request)
     {
-        $this->checkPrivilege();
-
         $settings = $this->getSettings();
         $edit = $request->query('edit'); // 'volunteer', 'event', 'collaboration', or null
 

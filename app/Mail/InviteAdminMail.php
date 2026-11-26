@@ -14,9 +14,7 @@ class InviteAdminMail extends Mailable
     use Queueable, SerializesModels;
 
     public $nama;
-
     public $username;
-
     public $passwordPlain;
 
     /**

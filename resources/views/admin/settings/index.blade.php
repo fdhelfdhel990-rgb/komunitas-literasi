@@ -4,6 +4,10 @@
 @section('page_title', 'Identitas & Konten')
 
 @section('content')
+    @php
+        $canManageSettings = Auth::user()->canManage('identitas_konten');
+    @endphp
+
     <!-- Flash Notifications -->
     @if (session('success'))
         <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center justify-between">
@@ -35,6 +39,9 @@
         <h1 class="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Statistik Beranda &amp; Informasi Footer
         </h1>
+        @unless ($canManageSettings)
+            <p class="text-xs text-slate-500 mt-1">Mode lihat saja (Anda tidak memiliki izin untuk mengubah identitas &amp; konten).</p>
+        @endunless
     </div>
 
     <!-- Setting Form -->
@@ -42,144 +49,148 @@
         <form action="{{ route('admin.settings.update') }}" method="POST" class="space-y-8">
             @csrf
 
-            <!-- Section 1: Statistik Beranda -->
-            <div>
-                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                    <div>
-                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Data Capaian</h3>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Berdampak Positif ke</label>
-                        <div class="relative">
-                            <input type="text" name="impact_kids" required value="{{ old('impact_kids', $settings['stats']['impact_kids'] ?? '≥ 400 Anak') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Koleksi Bacaan</label>
-                        <div class="relative">
-                            <input type="text" name="book_collection" required value="{{ old('book_collection', $settings['stats']['book_collection'] ?? '± 500 Buku') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sukarelawan Aktif</label>
-                        <div class="relative">
-                            <input type="text" name="active_volunteers" required value="{{ old('active_volunteers', $settings['stats']['active_volunteers'] ?? '20 Remaja') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Perpustakaan Desa</label>
-                        <div class="relative">
-                            <input type="text" name="village_libraries" required value="{{ old('village_libraries', $settings['stats']['village_libraries'] ?? '2 Lokasi Binaan') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section 2: Identitas & Kontak Footer -->
-            <div>
-                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                    <div>
-                        <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Kontak &amp; Identitas Komunitas</h3>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Alamat Komunitas</label>
-                        <input type="text" name="address" required value="{{ old('address', $settings['contact']['address'] ?? 'Tambun Selatan, Kabupaten Bekasi, Jawa Barat') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <fieldset @disabled(!$canManageSettings) class="space-y-8">
+                <!-- Section 1: Statistik Beranda -->
+                <div>
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor WhatsApp / Narahubung</label>
-                            <input type="text" name="whatsapp" value="{{ old('whatsapp', $settings['contact']['whatsapp'] ?? '+62 812-3456-7890') }}" placeholder="+62 8xx-xxxx-xxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Email Resmi Komunitas</label>
-                            <input type="email" name="email" value="{{ old('email', $settings['contact']['email'] ?? 'kontak@literasitamsel.org') }}" placeholder="kontak@literasitamsel.org" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Data Capaian</h3>
                         </div>
                     </div>
 
-                    <!-- Tautan Media Sosial & Opsi Tampilan Footer -->
-                    <div class="pt-2">
-                        <label class="block text-xs font-semibold uppercase  text-slate-700 mb-3">Tautan Media Sosial </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Berdampak Positif ke</label>
+                            <div class="relative">
+                                <input type="text" name="impact_kids" required value="{{ old('impact_kids', $settings['stats']['impact_kids'] ?? '≥ 400 Anak') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition disabled:bg-slate-50 disabled:text-slate-600">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Koleksi Bacaan</label>
+                            <div class="relative">
+                                <input type="text" name="book_collection" required value="{{ old('book_collection', $settings['stats']['book_collection'] ?? '± 500 Buku') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition disabled:bg-slate-50 disabled:text-slate-600">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sukarelawan Aktif</label>
+                            <div class="relative">
+                                <input type="text" name="active_volunteers" required value="{{ old('active_volunteers', $settings['stats']['active_volunteers'] ?? '20 Remaja') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition disabled:bg-slate-50 disabled:text-slate-600">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Perpustakaan Desa</label>
+                            <div class="relative">
+                                <input type="text" name="village_libraries" required value="{{ old('village_libraries', $settings['stats']['village_libraries'] ?? '2 Lokasi Binaan') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-semibold focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]/20 transition disabled:bg-slate-50 disabled:text-slate-600">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Identitas & Kontak Footer -->
+                <div>
+                    <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Kontak &amp; Identitas Komunitas</h3>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Alamat Komunitas</label>
+                            <input type="text" name="address" required value="{{ old('address', $settings['contact']['address'] ?? 'Tambun Selatan, Kabupaten Bekasi, Jawa Barat') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
+                        </div>
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- Instagram -->
-                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                                        <i class="fa-brands fa-instagram text-rose-600 text-sm"></i>
-                                        <span>Tautan Instagram (@)</span>
-                                    </label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
-                                        <input type="checkbox" name="instagram_show" value="1" @checked(old('instagram_show', $settings['contact']['instagram_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
-                                        <span>Tampilkan di footer</span>
-                                    </label>
-                                </div>
-                                <input type="text" name="instagram" value="{{ old('instagram', $settings['contact']['instagram'] ?? 'https://instagram.com/literasitamsel') }}" placeholder="https://instagram.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nomor WhatsApp / Narahubung</label>
+                                <input type="text" name="whatsapp" value="{{ old('whatsapp', $settings['contact']['whatsapp'] ?? '+62 812-3456-7890') }}" placeholder="+62 8xx-xxxx-xxxx" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
                             </div>
-
-                            <!-- YouTube -->
-                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                                        <i class="fa-brands fa-youtube text-red-600 text-sm"></i>
-                                        <span>Tautan YouTube</span>
-                                    </label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
-                                        <input type="checkbox" name="youtube_show" value="1" @checked(old('youtube_show', $settings['contact']['youtube_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
-                                        <span>Tampilkan di footer</span>
-                                    </label>
-                                </div>
-                                <input type="text" name="youtube" value="{{ old('youtube', $settings['contact']['youtube'] ?? 'https://youtube.com/@literasitamsel') }}" placeholder="https://youtube.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Email Resmi Komunitas</label>
+                                <input type="email" name="email" value="{{ old('email', $settings['contact']['email'] ?? 'kontak@literasitamsel.org') }}" placeholder="kontak@literasitamsel.org" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
                             </div>
+                        </div>
 
-                            <!-- Facebook -->
-                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                                        <i class="fa-brands fa-facebook text-blue-600 text-sm"></i>
-                                        <span>Tautan Facebook</span>
-                                    </label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
-                                        <input type="checkbox" name="facebook_show" value="1" @checked(old('facebook_show', $settings['contact']['facebook_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
-                                        <span>Tampilkan di footer</span>
-                                    </label>
+                        <!-- Tautan Media Sosial & Opsi Tampilan Footer -->
+                        <div class="pt-2">
+                            <label class="block text-xs font-semibold uppercase text-slate-700 mb-3">Tautan Media Sosial</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <!-- Instagram -->
+                                <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                            <i class="fa-brands fa-instagram text-rose-600 text-sm"></i>
+                                            <span>Tautan Instagram (@)</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 {{ $canManageSettings ? 'cursor-pointer' : 'cursor-not-allowed' }} text-xs font-medium text-slate-600 hover:text-slate-900">
+                                            <input type="checkbox" name="instagram_show" value="1" @checked(old('instagram_show', $settings['contact']['instagram_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                            <span>Tampilkan di footer</span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="instagram" value="{{ old('instagram', $settings['contact']['instagram'] ?? 'https://instagram.com/literasitamsel') }}" placeholder="https://instagram.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
                                 </div>
-                                <input type="text" name="facebook" value="{{ old('facebook', $settings['contact']['facebook'] ?? 'https://facebook.com/literasitamsel') }}" placeholder="https://facebook.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
-                            </div>
 
-                            <!-- TikTok -->
-                            <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
-                                        <i class="fa-brands fa-tiktok text-slate-900 text-sm"></i>
-                                        <span>Tautan TikTok</span>
-                                    </label>
-                                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 hover:text-slate-900">
-                                        <input type="checkbox" name="tiktok_show" value="1" @checked(old('tiktok_show', $settings['contact']['tiktok_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
-                                        <span>Tampilkan di footer</span>
-                                    </label>
+                                <!-- YouTube -->
+                                <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                            <i class="fa-brands fa-youtube text-red-600 text-sm"></i>
+                                            <span>Tautan YouTube</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 {{ $canManageSettings ? 'cursor-pointer' : 'cursor-not-allowed' }} text-xs font-medium text-slate-600 hover:text-slate-900">
+                                            <input type="checkbox" name="youtube_show" value="1" @checked(old('youtube_show', $settings['contact']['youtube_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                            <span>Tampilkan di footer</span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="youtube" value="{{ old('youtube', $settings['contact']['youtube'] ?? 'https://youtube.com/@literasitamsel') }}" placeholder="https://youtube.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
                                 </div>
-                                <input type="text" name="tiktok" value="{{ old('tiktok', $settings['contact']['tiktok'] ?? 'https://tiktok.com/@literasitamsel') }}" placeholder="https://tiktok.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition">
+
+                                <!-- Facebook -->
+                                <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                            <i class="fa-brands fa-facebook text-blue-600 text-sm"></i>
+                                            <span>Tautan Facebook</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 {{ $canManageSettings ? 'cursor-pointer' : 'cursor-not-allowed' }} text-xs font-medium text-slate-600 hover:text-slate-900">
+                                            <input type="checkbox" name="facebook_show" value="1" @checked(old('facebook_show', $settings['contact']['facebook_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                            <span>Tampilkan di footer</span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="facebook" value="{{ old('facebook', $settings['contact']['facebook'] ?? 'https://facebook.com/literasitamsel') }}" placeholder="https://facebook.com/literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
+                                </div>
+
+                                <!-- TikTok -->
+                                <div class="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-800">
+                                            <i class="fa-brands fa-tiktok text-slate-900 text-sm"></i>
+                                            <span>Tautan TikTok</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1.5 {{ $canManageSettings ? 'cursor-pointer' : 'cursor-not-allowed' }} text-xs font-medium text-slate-600 hover:text-slate-900">
+                                            <input type="checkbox" name="tiktok_show" value="1" @checked(old('tiktok_show', $settings['contact']['tiktok_show'] ?? true)) class="rounded border-slate-300 text-[#0A2373] focus:ring-[#0A2373]">
+                                            <span>Tampilkan di footer</span>
+                                        </label>
+                                    </div>
+                                    <input type="text" name="tiktok" value="{{ old('tiktok', $settings['contact']['tiktok'] ?? 'https://tiktok.com/@literasitamsel') }}" placeholder="https://tiktok.com/@literasitamsel" class="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-[#0A2373] transition disabled:bg-slate-50 disabled:text-slate-600">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </fieldset>
 
             <!-- Submit Button -->
-            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition cursor-pointer shadow-xs">
-                    Simpan Perubahan
-                </button>
-            </div>
+            @if ($canManageSettings)
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#0A2373] text-white text-xs sm:text-sm font-semibold hover:bg-[#071a57] active:scale-[0.98] transition cursor-pointer shadow-xs">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            @endif
         </form>
     </div>
 @endsection

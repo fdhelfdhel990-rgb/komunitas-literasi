@@ -71,7 +71,7 @@ class User extends Authenticatable
 
     public function hasPrivilege(string $page): bool
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isSuperAdmin() || $page === 'dashboard') {
             return true;
         }
 

@@ -2,17 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\SendAdminInvitationJob;
-use App\Mail\InviteAdminMail;
 use App\Models\User;
-use App\Notifications\NewAdminNotification;
+use App\Mail\InviteAdminMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class UserController extends Controller
@@ -94,16 +92,23 @@ class UserController extends Controller
             'privileges' => $this->formatPrivileges($validated['privileges']),
         ]);
 
-        // Kirim email kredensial akun via SMTP yang terdaftar di .env
-        dispatch(new SendAdminInvitationJob($user, $validated['password']));
-
-        // Simpan notifikasi lonceng untuk Super Admin jika tabel notifications tersedia
-        if (Auth::user() && Schema::hasTable('notifications')) {
-            Auth::user()->notify(new NewAdminNotification($user));
+        $emailTerkirim = true;
+        try {
+            Mail::to($user->email)->send(new InviteAdminMail(
+                $user->name,
+                $user->username ?? $user->email,
+                $validated['password']
+            ));
+        } catch (\Throwable $e) {
+            $emailTerkirim = false;
+            Log::error('Gagal mengirim email undangan admin: ' . $e->getMessage());
         }
 
-        return redirect()->route('admin.users.index')
-            ->with('success', 'Akun admin "' . $validated['name'] . '" berhasil dibuat dan email undangan telah dikirim.');
+        $pesan = $emailTerkirim
+            ? 'Akun admin "' . $validated['name'] . '" berhasil dibuat dan email undangan telah dikirim.'
+            : 'Akun admin "' . $validated['name'] . '" berhasil dibuat, namun email undangan gagal dikirim (cek konfigurasi SMTP).';
+
+        return redirect()->route('admin.users.index')->with('success', $pesan);
     }
 
     /**
@@ -231,14 +236,12 @@ class UserController extends Controller
         }
 
         DB::transaction(function () use ($currentSuper, $targetAdmin) {
-            // Admin terpilih menjadi Super Admin dengan seluruh privilege = true
             $targetAdmin->update([
                 'role'       => 'super-admin',
                 'status'     => 'aktif',
                 'privileges' => User::fullPrivileges(),
             ]);
 
-            // Mantan Super Admin turun menjadi admin biasa, tetapi full privilege tetap dipertahankan
             $currentSuper->update([
                 'role'       => 'admin',
                 'privileges' => User::fullPrivileges(),

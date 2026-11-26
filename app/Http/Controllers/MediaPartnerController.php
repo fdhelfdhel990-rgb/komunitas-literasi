@@ -113,14 +113,13 @@ class MediaPartnerController extends Controller
      */
     protected function checkPrivilege(): void
     {
-        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('media-partners')) {
+        if (auth()->check() && ! auth()->user()->isSuperAdmin() && ! auth()->user()->hasPrivilege('media_partners')) {
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Media Partner.');
         }
     }
 
     public function indexAdmin()
     {
-        $this->checkPrivilege();
         $partners = self::getPartners();
 
         return view('admin.media-partners.index', compact('partners'));

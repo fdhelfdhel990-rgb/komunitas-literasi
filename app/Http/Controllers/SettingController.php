@@ -15,7 +15,7 @@ class SettingController extends Controller
      */
     protected function checkPrivilege(): void
     {
-        if (Auth::check() && ! Auth::user()->hasPrivilege('settings')) {
+        if (Auth::check() && ! Auth::user()->hasPrivilege('identitas_konten')) {
             abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengelola Pengaturan & Identitas Konten.');
         }
     }
@@ -78,8 +78,6 @@ class SettingController extends Controller
      */
     public function indexAdmin(): View
     {
-        $this->checkPrivilege();
-
         $settings = self::getSettings();
 
         return view('admin.settings.index', compact('settings'));
