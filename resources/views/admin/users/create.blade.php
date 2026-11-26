@@ -75,14 +75,20 @@
                 <!-- Username & Email -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username</label>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Username <span class="text-rose-500">*</span></label>
                         <input 
                             type="text" 
                             name="username" 
+                            required
+                            minlength="3"
+                            maxlength="50"
+                            pattern="[a-zA-Z0-9._]+"
+                            title="Hanya boleh huruf, angka, underscore (_), dan titik (.) tanpa spasi"
                             value="{{ old('username') }}" 
                             placeholder="sarah_admin"
                             class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:border-[#0A2373] focus:ring-1 focus:ring-[#0A2373]"
                         >
+                        <p class="text-[11px] text-slate-400 mt-1">Hanya huruf, angka, underscore (_), dan titik (.), tanpa spasi.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1.5">Email <span class="text-rose-500">*</span></label>
@@ -114,7 +120,7 @@
             <!-- Peran & Hak Akses Halaman -->
             <div class="space-y-4 pt-2">
                 <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
-                    Peran &amp; Hak Akses Kelola (CUD)
+                    Peran &amp; Hak Akses Kelola (Create, Update, Delete)
                 </h2>
 
                 <div id="privileges-container" class="space-y-2">
@@ -162,7 +168,7 @@
                             </div>
                         </div>
                     </div>
-                    <p class="text-[11px] text-slate-400">Semua admin otomatis memiliki akses lihat (Read) ke seluruh menu termasuk 01. Dashboard.</p>
+                    <p class="text-[11px] text-slate-400">Semua admin tetap memiliki akses lihat (Read) ke seluruh menu termasuk 01. Dashboard.</p>
                 </div>
             </div>
 

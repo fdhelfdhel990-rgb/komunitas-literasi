@@ -45,7 +45,11 @@ class UserController extends Controller
     {
         $this->checkSuperAdmin();
 
-        $users = User::withTrashed()->latest()->get();
+        $users = User::withTrashed()
+            ->orderByRaw('id = ? DESC', [Auth::id()])
+            ->orderBy('name', 'asc')
+            ->get();
+
         $totalUsers = $users->count();
         $activeUsers = $users->where('status', 'aktif')->whereNull('deleted_at')->count();
         $inactiveUsers = $users->filter(fn ($u) => $u->status === 'tidak aktif' || $u->trashed())->count();
@@ -72,19 +76,23 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name'         => ['required', 'string', 'max:255'],
-            'username'     => ['nullable', 'string', 'max:50', 'unique:users,username'],
+            'username'     => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9._]+$/', 'not_in:create,edit,invite', 'unique:users,username'],
             'email'        => ['required', 'email', 'max:255', 'unique:users,email'],
             'password'     => ['required', 'string', 'min:6'],
             'privileges'   => ['required', 'array', 'min:1'],
             'privileges.*' => ['required', 'string', 'distinct', 'in:' . implode(',', User::MODULES)],
         ], [
+            'username.required'   => 'Username wajib diisi.',
+            'username.regex'      => 'Username hanya boleh berisi huruf, angka, underscore (_), dan titik (.) tanpa spasi.',
+            'username.not_in'     => 'Username tersebut tidak boleh digunakan.',
+            'username.unique'     => 'Username sudah digunakan oleh admin lain.',
             'privileges.required' => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
             'privileges.min'      => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
         ]);
 
         $user = User::create([
             'name'       => $validated['name'],
-            'username'   => $validated['username'] ?: null,
+            'username'   => $validated['username'],
             'email'      => $validated['email'],
             'password'   => Hash::make($validated['password']),
             'role'       => 'admin',
@@ -96,7 +104,7 @@ class UserController extends Controller
         try {
             Mail::to($user->email)->send(new InviteAdminMail(
                 $user->name,
-                $user->username ?? $user->email,
+                $user->username,
                 $validated['password']
             ));
         } catch (\Throwable $e) {
@@ -114,11 +122,11 @@ class UserController extends Controller
     /**
      * Menampilkan form edit profil dan hak akses admin.
      */
-    public function edit(int|string $id): View
+    public function edit(string $username): View
     {
         $this->checkSuperAdmin();
 
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::withTrashed()->where('username', $username)->firstOrFail();
 
         return view('admin.users.edit', compact('user'));
     }
@@ -126,27 +134,31 @@ class UserController extends Controller
     /**
      * Memperbarui data dan hak akses admin.
      */
-    public function update(Request $request, int|string $id): RedirectResponse
+    public function update(Request $request, string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::withTrashed()->findOrFail($id);
+        $user = User::withTrashed()->where('username', $username)->firstOrFail();
         $isSuperAdmin = $user->isSuperAdmin();
 
         $validated = $request->validate([
             'name'         => ['required', 'string', 'max:255'],
-            'username'     => ['nullable', 'string', 'max:50', 'unique:users,username,' . $user->id],
+            'username'     => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-zA-Z0-9._]+$/', 'not_in:create,edit,invite', 'unique:users,username,' . $user->id],
             'email'        => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'password'     => ['nullable', 'string', 'min:6'],
             'privileges'   => $isSuperAdmin ? ['nullable', 'array'] : ['required', 'array', 'min:1'],
             'privileges.*' => ['required', 'string', 'distinct', 'in:' . implode(',', User::MODULES)],
         ], [
+            'username.required'   => 'Username wajib diisi.',
+            'username.regex'      => 'Username hanya boleh berisi huruf, angka, underscore (_), dan titik (.) tanpa spasi.',
+            'username.not_in'     => 'Username tersebut tidak boleh digunakan.',
+            'username.unique'     => 'Username sudah digunakan oleh admin lain.',
             'privileges.required' => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
             'privileges.min'      => 'Admin wajib memiliki minimal 1 hak akses (privilege).',
         ]);
 
         $user->name = $validated['name'];
-        $user->username = $validated['username'] ?: null;
+        $user->username = $validated['username'];
         $user->email = $validated['email'];
         $user->privileges = $isSuperAdmin
             ? User::fullPrivileges()
@@ -165,11 +177,11 @@ class UserController extends Controller
     /**
      * Menonaktifkan akun admin (status = 'tidak aktif' + Soft Delete).
      */
-    public function deactivate(int|string $id): RedirectResponse
+    public function deactivate(string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::findOrFail($id);
+        $user = User::where('username', $username)->firstOrFail();
 
         if ($user->isSuperAdmin() || Auth::id() === $user->id) {
             return back()->with('error', 'Akun Super Admin tidak dapat dinonaktifkan sebelum jabatan dipindahtangankan.');
@@ -185,26 +197,26 @@ class UserController extends Controller
     /**
      * Mengaktifkan kembali akun admin dari Soft Delete (restore + status = 'aktif').
      */
-    public function restore(int|string $id): RedirectResponse
+    public function restore(string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::onlyTrashed()->findOrFail($id);
+        $user = User::onlyTrashed()->where('username', $username)->firstOrFail();
         $user->restore();
         $user->update(['status' => 'aktif']);
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('admin.users.index', ['tab' => 'inactive'])
             ->with('success', 'Akun admin "' . $user->name . '" berhasil diaktifkan kembali.');
     }
 
     /**
      * Menghapus akun secara permanen (khusus akun yang sudah dinonaktifkan).
      */
-    public function forceDestroy(int|string $id): RedirectResponse
+    public function forceDestroy(string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
-        $user = User::onlyTrashed()->findOrFail($id);
+        $user = User::onlyTrashed()->where('username', $username)->firstOrFail();
 
         if ($user->isSuperAdmin() || Auth::id() === $user->id) {
             return back()->with('error', 'Akun Super Admin tidak dapat dihapus.');
@@ -213,14 +225,14 @@ class UserController extends Controller
         $name = $user->name;
         $user->forceDelete();
 
-        return redirect()->route('admin.users.index')
+        return redirect()->route('admin.users.index', ['tab' => 'inactive'])
             ->with('success', 'Akun admin "' . $name . '" telah dihapus secara permanen.');
     }
 
     /**
      * Memindahtangankan jabatan Super Admin ke admin aktif lainnya.
      */
-    public function transferSuperAdmin(Request $request, int|string $id): RedirectResponse
+    public function transferSuperAdmin(Request $request, string $username): RedirectResponse
     {
         $this->checkSuperAdmin();
 
@@ -235,7 +247,7 @@ class UserController extends Controller
         ]);
 
         $currentSuper = Auth::user();
-        $targetAdmin = User::findOrFail($id);
+        $targetAdmin = User::where('username', $username)->firstOrFail();
 
         if ($targetAdmin->id === $currentSuper->id) {
             return back()->with('error', 'Anda sudah menjabat sebagai Super Admin.');

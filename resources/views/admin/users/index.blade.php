@@ -163,7 +163,7 @@
                             <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
                                     <a 
-                                        href="{{ route('admin.users.edit', $u->id) }}" 
+                                        href="{{ route('admin.users.edit', $u->username) }}"
                                         title="Edit Profil &amp; Hak Akses"
                                         class="p-2 rounded-lg border border-slate-200 text-slate-600 hover:text-[#0A2373] hover:border-[#0A2373] hover:bg-[#0A2373]/5 transition cursor-pointer"
                                     >
@@ -171,7 +171,7 @@
                                     </a>
 
                                     @if (! $isCurrentUser && ! $isSuper)
-                                        <form action="{{ route('admin.users.deactivate', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan akun admin {{ addslashes($u->name) }}? Akun akan dipindahkan ke daftar Admin Nonaktif dan tidak bisa login.')">
+                                        <form action="{{ route('admin.users.deactivate', $u->username) }}" method="POST" class="inline" onsubmit="return confirm('Nonaktifkan akun admin {{ addslashes($u->name) }}? Akun akan dipindahkan ke daftar Admin Nonaktif dan tidak bisa login.')">
                                             @csrf
                                             @method('PATCH')
                                             <button 
@@ -243,7 +243,7 @@
                             <!-- Action Column (Nonaktif: Aktifkan & Hapus Permanen) -->
                             <td class="px-4 sm:px-6 py-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <form action="{{ route('admin.users.restore', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('Aktifkan kembali akun admin {{ addslashes($u->name) }}?')">
+                                    <form action="{{ route('admin.users.restore', $u->username) }}" method="POST" class="inline" onsubmit="return confirm('Aktifkan kembali akun admin {{ addslashes($u->name) }}?')">
                                         @csrf
                                         @method('PATCH')
                                         <button 
@@ -255,7 +255,7 @@
                                         </button>
                                     </form>
 
-                                    <form action="{{ route('admin.users.force-delete', $u->id) }}" method="POST" class="inline" onsubmit="return confirm('HAPUS PERMANEN akun {{ addslashes($u->name) }}? Data akun akan hilang selamanya dan tidak dapat dikembalikan!')">
+                                    <form action="{{ route('admin.users.force-delete', $u->username) }}" method="POST" class="inline" onsubmit="return confirm('HAPUS PERMANEN akun {{ addslashes($u->name) }}? Data akun akan hilang selamanya dan tidak dapat dikembalikan!')">
                                         @csrf
                                         @method('DELETE')
                                         <button 
@@ -315,8 +315,8 @@
                         <option value="">Pilih admin penerima</option>
                         @foreach ($eligibleTransferAdmins as $candidate)
                             <option
-                                value="{{ $candidate->id }}"
-                                data-url="{{ route('admin.users.transfer-super-admin', $candidate->id) }}"
+                                value="{{ $candidate->username }}"
+                                data-url="{{ route('admin.users.transfer-super-admin', $candidate->username) }}"
                                 data-name="{{ $candidate->name }}"
                             >
                                 {{ $candidate->name }} ({{ $candidate->username ?? $candidate->email }})
@@ -392,7 +392,22 @@
                 btnInactive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer bg-rose-900/10 text-rose-900 border-b-2 border-rose-800';
                 btnActive.className = 'flex items-center justify-center px-5 py-4 rounded-lg text-xs sm:text-sm font-semibold transition cursor-pointer text-slate-500 hover:text-slate-800';
             }
+
+            const url = new URL(window.location);
+            if (isActiveTab) {
+                url.searchParams.delete('tab');
+            } else {
+                url.searchParams.set('tab', 'inactive');
+            }
+            window.history.replaceState({}, '', url);
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialTab = @json(request('tab') === 'inactive' ? 'inactive' : 'active');
+            if (initialTab === 'inactive') {
+                switchAdminTab('inactive');
+            }
+        });
 
         function updateTransferFormAction() {
             const select = document.getElementById('transfer-target-select');
