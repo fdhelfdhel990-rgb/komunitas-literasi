@@ -92,10 +92,9 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Waktu Pelaksanaan</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="schedule" 
-                        value="{{ old('schedule', $event['schedule'] ?? '') }}" 
-                        placeholder="Contoh: 30 November 2026"
+                        value="{{ old('schedule', $event->schedule?->format('Y-m-d')) }}" 
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
@@ -103,10 +102,9 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Batas Pendaftaran</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="deadline" 
-                        value="{{ old('deadline', $event['deadline'] ?? '') }}" 
-                        placeholder="Contoh: 25 November 2026"
+                        value="{{ old('deadline', $event->registration_deadline?->format('Y-m-d')) }}" 
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
@@ -114,10 +112,11 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kuota Relawan</label>
                     <input 
-                        type="text" 
+                        type="number" 
                         name="quota" 
-                        value="{{ old('quota', $event['quota'] ?? '') }}" 
-                        placeholder="Contoh: 20 Relawan"
+                        min="1"
+                        value="{{ old('quota', $event->volunteer_quota) }}" 
+                        placeholder="Contoh: 20"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
@@ -194,6 +193,7 @@
                         class="hidden" 
                         onchange="handlePosterSelected(this)"
                     >
+                    <input type="hidden" name="remove_poster" id="remove_poster" value="0">
                 </div>
             </div>
 
@@ -252,6 +252,8 @@
                 document.getElementById('poster-preview-box').classList.remove('hidden');
                 document.getElementById('poster-preview-box').classList.add('flex');
                 document.getElementById('poster-placeholder').classList.add('hidden');
+                
+                document.getElementById('remove_poster').value = '0';
             };
             reader.readAsDataURL(file);
         }
@@ -264,6 +266,8 @@
         document.getElementById('poster-preview-box').classList.add('hidden');
         document.getElementById('poster-preview-box').classList.remove('flex');
         document.getElementById('poster-placeholder').classList.remove('hidden');
+        
+        document.getElementById('remove_poster').value = '1';
     }
 </script>
 @endpush
