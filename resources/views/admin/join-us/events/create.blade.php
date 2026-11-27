@@ -91,10 +91,9 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Waktu Pelaksanaan</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="schedule" 
                         value="{{ old('schedule') }}" 
-                        placeholder="Contoh: 30 November 2026"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
@@ -102,10 +101,9 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Batas Pendaftaran</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="deadline" 
                         value="{{ old('deadline') }}" 
-                        placeholder="Contoh: 25 November 2026"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
@@ -113,10 +111,11 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kuota Relawan</label>
                     <input 
-                        type="text" 
+                        type="number" 
                         name="quota" 
-                        value="{{ old('quota', '20 Relawan') }}" 
-                        placeholder="Contoh: 20 Relawan"
+                        min="1"
+                        value="{{ old('quota', 20) }}" 
+                        placeholder="Contoh: 20"
                         class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 bg-white focus:outline-none focus:border-[#0A2373] transition"
                     >
                 </div>
